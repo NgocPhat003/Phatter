@@ -30,3 +30,20 @@ export const createPost = async (req: Request, res: Response) => {
         res.status(500).json({ error: "Failed to create post"});
     }
 };
+
+export const getPosts = async (_req: Request, res: Response) => {
+    try {
+        const posts = await db.orm.public.Post
+        ?.orderBy((post) => post.createdAt.desc())
+        .all();
+
+        res.json({
+            status: "success",
+            count: posts?.length,
+            posts,
+        });
+    } catch (error) {
+        console.error("Get Posts Error:", error);
+        res.status(500).json({ error: "Failed to fetch feed" });
+    }
+};
