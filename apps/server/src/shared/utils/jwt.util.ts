@@ -1,4 +1,4 @@
-import jwt, { JsonWebTokenError } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { jwtConfig } from "../config/jwt.config.js";
 import type { AuthTokenPayload } from "../types/auth.types.js";
 

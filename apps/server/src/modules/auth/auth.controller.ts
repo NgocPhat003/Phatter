@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { db } from "phatter-db";
-import crypto form "crypto";
+import crypto from "crypto";
 import { signAuthToken } from "../../shared/utils/jwt.util.js";
 import { jwtConfig } from "../../shared/config/jwt.config.js";
 
@@ -9,13 +9,11 @@ export const createGuestSession = async (_req: Request, res: Response) => {
         const guestId = crypto.randomBytes(4).toString("hex");
         const guestUsername = `Guest_${guestId}`;
 
-        const newUser = await db.orm.public.User?.create({
-            data: {
-                email: `${guestUsername}@sandbox.phatter.local`,
-                username: guestUsername,
-                isGuestSandbox: true,
-                bio: "Temporary sandbox account",
-            },
+        const newUser = await db.orm.public.User.create({
+            email: `${guestUsername}@sandbox.phatter.local`,
+            username: guestUsername,
+            isGuestSandbox: true,
+            bio: "Temporary sandbox account",
         });
 
         const token = signAuthToken({
