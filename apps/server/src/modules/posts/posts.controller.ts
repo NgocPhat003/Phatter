@@ -33,14 +33,42 @@ export const createPost = async (req: Request, res: Response) => {
 
 export const getPosts = async (_req: Request, res: Response) => {
     try {
-        const posts = await db.orm.public.Post
-        ?.orderBy((post) => post.createdAt.desc())
-        .all();
+        // Fetch all posts and sort the newest first
+        const posts = await db.orm.public.Post.all();
+        posts.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+        // Map over each post to attach the post author, likes and comments
+        const enrichedPosts = await Promise.all(
+            posts.map(async (post) => {
+                // Fetch author's public profile data
+                const author = await db.orm.public.User?.where({ id: post.authorId }).first();
+
+                // Fetch engagement metrics
+                const likes = await db.orm.public.Like?.where({ postId: post.id }).all();
+                const comments = await db.orm.public.Comment?.where({ postId: post.id }).all();
+
+                return {
+                    id: post.id,
+                    content: post.content,
+                    imageUrl: post.imageUrl,
+                    createdAt: post.createdAt,
+                    author: author ? {
+                        id: author.id,
+                        username: author.username,
+                        profilePictureUrl: author.profilePictureUrl,
+                        isGuestSandbox: author.isGuestSandbox,
+                    } : null,
+                    engagement: {
+                        likesCount: likes.length,
+                        commentsCount: comments.length,
+                    }
+                };
+            })
+        );
 
         res.json({
             status: "success",
-            count: posts?.length,
-            posts,
+            count: enrichedPosts?.length,
+            posts: enrichedPosts,
         });
     } catch (error) {
         console.error("Get Posts Error:", error);
