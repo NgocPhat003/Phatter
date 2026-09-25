@@ -1,10 +1,12 @@
-import "@js-temporal/polyfill";
+import { Temporal } from "@js-temporal/polyfill";
+(globalThis as any).Temporal = Temporal;
 import express  from "express";  
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { db } from "phatter-db";
 import authRoutes from "./modules/auth/auth.routes.js";
+import postsRoutes from "./modules/posts/posts.routes.js";
 
 dotenv.config();
 
@@ -18,8 +20,10 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
-// Mount auth routes
+
+// Mounting routes
 app.use("/api/auth", authRoutes);
+app.use("/api/posts", postsRoutes);
 
 // Database Health Check Route
 app.get("/api/health", async (_req, res) => {
