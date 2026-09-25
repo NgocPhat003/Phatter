@@ -1,0 +1,1189 @@
+[
+  {
+    "id": "schema.public",
+    "label": "Create schema \"public\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "Create schema \"public\"",
+        "sql": "CREATE SCHEMA IF NOT EXISTS \"public\"",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "table.comment",
+    "label": "Create table \"comment\"",
+    "summary": "Creates table \"comment\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "comment"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"comment\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"comment\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"comment\"",
+        "sql": "CREATE TABLE \"public\".\"comment\" (\n  \"authorId\" text NOT NULL,\n  \"content\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"postId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"comment\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"comment\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.follows",
+    "label": "Create table \"follows\"",
+    "summary": "Creates table \"follows\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "follows"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"follows\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"follows\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"follows\"",
+        "sql": "CREATE TABLE \"public\".\"follows\" (\n  \"followerId\" text NOT NULL,\n  \"followingId\" text NOT NULL,\n  PRIMARY KEY (\"followerId\", \"followingId\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"follows\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"follows\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.like",
+    "label": "Create table \"like\"",
+    "summary": "Creates table \"like\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "like"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"like\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"like\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"like\"",
+        "sql": "CREATE TABLE \"public\".\"like\" (\n  \"id\" text NOT NULL,\n  \"postId\" text NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"like\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"like\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.post",
+    "label": "Create table \"post\"",
+    "summary": "Creates table \"post\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "post"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"post\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"post\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"post\"",
+        "sql": "CREATE TABLE \"public\".\"post\" (\n  \"authorId\" text NOT NULL,\n  \"content\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"imageUrl\" text,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"post\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"post\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.postTag",
+    "label": "Create table \"postTag\"",
+    "summary": "Creates table \"postTag\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "postTag"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"postTag\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"postTag\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"postTag\"",
+        "sql": "CREATE TABLE \"public\".\"postTag\" (\n  \"postId\" text NOT NULL,\n  \"tagId\" text NOT NULL,\n  PRIMARY KEY (\"postId\", \"tagId\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"postTag\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"postTag\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.tag",
+    "label": "Create table \"tag\"",
+    "summary": "Creates table \"tag\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "tag"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"tag\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"tag\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"tag\"",
+        "sql": "CREATE TABLE \"public\".\"tag\" (\n  \"id\" text NOT NULL,\n  \"name\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"tag\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"tag\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.user",
+    "label": "Create table \"user\"",
+    "summary": "Creates table \"user\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"user\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"user\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"user\"",
+        "sql": "CREATE TABLE \"public\".\"user\" (\n  \"bio\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"email\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"isGuestSandbox\" bool DEFAULT false NOT NULL,\n  \"profilePictureUrl\" text,\n  \"username\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"user\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"user\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.like.like_postId_userId_key",
+    "label": "Add unique constraint on \"like\" (postId, userId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "like_postId_userId_key",
+        "table": "like"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"like_postId_userId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "like_postId_userId_key",
+          "public",
+          "\"public\".\"like\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"like_postId_userId_key\"",
+        "sql": "ALTER TABLE \"public\".\"like\" ADD CONSTRAINT \"like_postId_userId_key\" UNIQUE (\"postId\", \"userId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"like_postId_userId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "like_postId_userId_key",
+          "public",
+          "\"public\".\"like\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.tag.tag_name_key",
+    "label": "Add unique constraint on \"tag\" (name)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "tag_name_key",
+        "table": "tag"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"tag_name_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "tag_name_key",
+          "public",
+          "\"public\".\"tag\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"tag_name_key\"",
+        "sql": "ALTER TABLE \"public\".\"tag\" ADD CONSTRAINT \"tag_name_key\" UNIQUE (\"name\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"tag_name_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "tag_name_key",
+          "public",
+          "\"public\".\"tag\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.user.user_email_key",
+    "label": "Add unique constraint on \"user\" (email)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "user_email_key",
+        "table": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"user_email_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "user_email_key",
+          "public",
+          "\"public\".\"user\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"user_email_key\"",
+        "sql": "ALTER TABLE \"public\".\"user\" ADD CONSTRAINT \"user_email_key\" UNIQUE (\"email\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"user_email_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "user_email_key",
+          "public",
+          "\"public\".\"user\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.user.user_username_key",
+    "label": "Add unique constraint on \"user\" (username)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "user_username_key",
+        "table": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"user_username_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "user_username_key",
+          "public",
+          "\"public\".\"user\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"user_username_key\"",
+        "sql": "ALTER TABLE \"public\".\"user\" ADD CONSTRAINT \"user_username_key\" UNIQUE (\"username\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"user_username_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "user_username_key",
+          "public",
+          "\"public\".\"user\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.comment.comment_authorId_idx_e47547ed",
+    "label": "Create index \"comment_authorId_idx_e47547ed\" on \"comment\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "comment_authorId_idx_e47547ed",
+        "table": "comment"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"comment_authorId_idx_e47547ed\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"comment_authorId_idx_e47547ed\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"comment_authorId_idx_e47547ed\"",
+        "sql": "CREATE INDEX \"comment_authorId_idx_e47547ed\" ON \"public\".\"comment\" (\"authorId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"comment_authorId_idx_e47547ed\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"comment_authorId_idx_e47547ed\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.comment.comment_postId_idx_a7a72715",
+    "label": "Create index \"comment_postId_idx_a7a72715\" on \"comment\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "comment_postId_idx_a7a72715",
+        "table": "comment"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"comment_postId_idx_a7a72715\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"comment_postId_idx_a7a72715\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"comment_postId_idx_a7a72715\"",
+        "sql": "CREATE INDEX \"comment_postId_idx_a7a72715\" ON \"public\".\"comment\" (\"postId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"comment_postId_idx_a7a72715\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"comment_postId_idx_a7a72715\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.follows.follows_followerId_idx_2aa6c62d",
+    "label": "Create index \"follows_followerId_idx_2aa6c62d\" on \"follows\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "follows_followerId_idx_2aa6c62d",
+        "table": "follows"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"follows_followerId_idx_2aa6c62d\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"follows_followerId_idx_2aa6c62d\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"follows_followerId_idx_2aa6c62d\"",
+        "sql": "CREATE INDEX \"follows_followerId_idx_2aa6c62d\" ON \"public\".\"follows\" (\"followerId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"follows_followerId_idx_2aa6c62d\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"follows_followerId_idx_2aa6c62d\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.follows.follows_followingId_idx_1cf16645",
+    "label": "Create index \"follows_followingId_idx_1cf16645\" on \"follows\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "follows_followingId_idx_1cf16645",
+        "table": "follows"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"follows_followingId_idx_1cf16645\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"follows_followingId_idx_1cf16645\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"follows_followingId_idx_1cf16645\"",
+        "sql": "CREATE INDEX \"follows_followingId_idx_1cf16645\" ON \"public\".\"follows\" (\"followingId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"follows_followingId_idx_1cf16645\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"follows_followingId_idx_1cf16645\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.like.like_postId_idx_a7a72715",
+    "label": "Create index \"like_postId_idx_a7a72715\" on \"like\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "like_postId_idx_a7a72715",
+        "table": "like"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"like_postId_idx_a7a72715\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"like_postId_idx_a7a72715\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"like_postId_idx_a7a72715\"",
+        "sql": "CREATE INDEX \"like_postId_idx_a7a72715\" ON \"public\".\"like\" (\"postId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"like_postId_idx_a7a72715\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"like_postId_idx_a7a72715\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.like.like_userId_idx_a489d58a",
+    "label": "Create index \"like_userId_idx_a489d58a\" on \"like\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "like_userId_idx_a489d58a",
+        "table": "like"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"like_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"like_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"like_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"like_userId_idx_a489d58a\" ON \"public\".\"like\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"like_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"like_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.post.post_authorId_idx_e47547ed",
+    "label": "Create index \"post_authorId_idx_e47547ed\" on \"post\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "post_authorId_idx_e47547ed",
+        "table": "post"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"post_authorId_idx_e47547ed\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"post_authorId_idx_e47547ed\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"post_authorId_idx_e47547ed\"",
+        "sql": "CREATE INDEX \"post_authorId_idx_e47547ed\" ON \"public\".\"post\" (\"authorId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"post_authorId_idx_e47547ed\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"post_authorId_idx_e47547ed\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.postTag.postTag_postId_idx_a7a72715",
+    "label": "Create index \"postTag_postId_idx_a7a72715\" on \"postTag\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "postTag_postId_idx_a7a72715",
+        "table": "postTag"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"postTag_postId_idx_a7a72715\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"postTag_postId_idx_a7a72715\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"postTag_postId_idx_a7a72715\"",
+        "sql": "CREATE INDEX \"postTag_postId_idx_a7a72715\" ON \"public\".\"postTag\" (\"postId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"postTag_postId_idx_a7a72715\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"postTag_postId_idx_a7a72715\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.postTag.postTag_tagId_idx_86854244",
+    "label": "Create index \"postTag_tagId_idx_86854244\" on \"postTag\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "postTag_tagId_idx_86854244",
+        "table": "postTag"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"postTag_tagId_idx_86854244\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"postTag_tagId_idx_86854244\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"postTag_tagId_idx_86854244\"",
+        "sql": "CREATE INDEX \"postTag_tagId_idx_86854244\" ON \"public\".\"postTag\" (\"tagId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"postTag_tagId_idx_86854244\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"postTag_tagId_idx_86854244\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.comment.comment_postId_fkey",
+    "label": "Add foreign key \"comment_postId_fkey\" on \"comment\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "comment_postId_fkey",
+        "table": "comment"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"comment_postId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "comment_postId_fkey",
+          "public",
+          "\"public\".\"comment\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"comment_postId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"comment\"\nADD CONSTRAINT \"comment_postId_fkey\"\nFOREIGN KEY (\"postId\")\nREFERENCES \"public\".\"post\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"comment_postId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "comment_postId_fkey",
+          "public",
+          "\"public\".\"comment\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.comment.comment_authorId_fkey",
+    "label": "Add foreign key \"comment_authorId_fkey\" on \"comment\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "comment_authorId_fkey",
+        "table": "comment"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"comment_authorId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "comment_authorId_fkey",
+          "public",
+          "\"public\".\"comment\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"comment_authorId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"comment\"\nADD CONSTRAINT \"comment_authorId_fkey\"\nFOREIGN KEY (\"authorId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"comment_authorId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "comment_authorId_fkey",
+          "public",
+          "\"public\".\"comment\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.follows.follows_followerId_fkey",
+    "label": "Add foreign key \"follows_followerId_fkey\" on \"follows\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "follows_followerId_fkey",
+        "table": "follows"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"follows_followerId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "follows_followerId_fkey",
+          "public",
+          "\"public\".\"follows\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"follows_followerId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"follows\"\nADD CONSTRAINT \"follows_followerId_fkey\"\nFOREIGN KEY (\"followerId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"follows_followerId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "follows_followerId_fkey",
+          "public",
+          "\"public\".\"follows\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.follows.follows_followingId_fkey",
+    "label": "Add foreign key \"follows_followingId_fkey\" on \"follows\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "follows_followingId_fkey",
+        "table": "follows"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"follows_followingId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "follows_followingId_fkey",
+          "public",
+          "\"public\".\"follows\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"follows_followingId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"follows\"\nADD CONSTRAINT \"follows_followingId_fkey\"\nFOREIGN KEY (\"followingId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"follows_followingId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "follows_followingId_fkey",
+          "public",
+          "\"public\".\"follows\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.like.like_postId_fkey",
+    "label": "Add foreign key \"like_postId_fkey\" on \"like\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "like_postId_fkey",
+        "table": "like"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"like_postId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "like_postId_fkey",
+          "public",
+          "\"public\".\"like\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"like_postId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"like\"\nADD CONSTRAINT \"like_postId_fkey\"\nFOREIGN KEY (\"postId\")\nREFERENCES \"public\".\"post\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"like_postId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "like_postId_fkey",
+          "public",
+          "\"public\".\"like\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.like.like_userId_fkey",
+    "label": "Add foreign key \"like_userId_fkey\" on \"like\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "like_userId_fkey",
+        "table": "like"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"like_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "like_userId_fkey",
+          "public",
+          "\"public\".\"like\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"like_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"like\"\nADD CONSTRAINT \"like_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"like_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "like_userId_fkey",
+          "public",
+          "\"public\".\"like\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.post.post_authorId_fkey",
+    "label": "Add foreign key \"post_authorId_fkey\" on \"post\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "post_authorId_fkey",
+        "table": "post"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"post_authorId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "post_authorId_fkey",
+          "public",
+          "\"public\".\"post\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"post_authorId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"post\"\nADD CONSTRAINT \"post_authorId_fkey\"\nFOREIGN KEY (\"authorId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"post_authorId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "post_authorId_fkey",
+          "public",
+          "\"public\".\"post\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.postTag.postTag_postId_fkey",
+    "label": "Add foreign key \"postTag_postId_fkey\" on \"postTag\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "postTag_postId_fkey",
+        "table": "postTag"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"postTag_postId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "postTag_postId_fkey",
+          "public",
+          "\"public\".\"postTag\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"postTag_postId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"postTag\"\nADD CONSTRAINT \"postTag_postId_fkey\"\nFOREIGN KEY (\"postId\")\nREFERENCES \"public\".\"post\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"postTag_postId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "postTag_postId_fkey",
+          "public",
+          "\"public\".\"postTag\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.postTag.postTag_tagId_fkey",
+    "label": "Add foreign key \"postTag_tagId_fkey\" on \"postTag\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "postTag_tagId_fkey",
+        "table": "postTag"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"postTag_tagId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "postTag_tagId_fkey",
+          "public",
+          "\"public\".\"postTag\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"postTag_tagId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"postTag\"\nADD CONSTRAINT \"postTag_tagId_fkey\"\nFOREIGN KEY (\"tagId\")\nREFERENCES \"public\".\"tag\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"postTag_tagId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "postTag_tagId_fkey",
+          "public",
+          "\"public\".\"postTag\""
+        ]
+      }
+    ]
+  }
+]

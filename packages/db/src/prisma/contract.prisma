@@ -1,0 +1,75 @@
+model User {
+  id                String    @id @default(cuid(2))
+  email             String    @unique
+  username          String    @unique
+  profilePictureUrl String?
+  bio               String?
+  isGuestSandbox    Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+
+  posts     Post[]
+  comments  Comment[]
+  likes     Like[]
+  
+  // The Follow Mesh
+  followers Follows[] @relation("following")
+  following Follows[] @relation("follower")
+}
+
+model Follows {
+  followerId  String
+  followingId String
+  follower    User   @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User   @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+}
+
+model Post {
+  id        String    @id @default(cuid(2))
+  content   String
+  imageUrl  String?
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+
+  comments  Comment[]
+  likes     Like[]
+  tags      PostTag[] 
+}
+
+model Comment {
+  id        String   @id @default(cuid(2))
+  content   String
+  postId    String
+  authorId  String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Like {
+  id     String @id @default(cuid(2))
+  postId String
+  userId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+}
+
+model Tag {
+  id    String    @id @default(cuid(2))
+  name  String    @unique
+  posts PostTag[]
+}
+
+// NEW: Explicit Many-to-Many Join Table required by Prisma 8
+model PostTag {
+  postId String
+  tagId  String
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+}
