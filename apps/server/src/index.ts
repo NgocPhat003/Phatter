@@ -7,6 +7,8 @@ import cookieParser from "cookie-parser";
 import { db } from "phatter-db";
 import authRoutes from "./modules/auth/auth.routes.js";
 import postsRoutes from "./modules/posts/posts.routes.js";
+import likesRoutes from "./modules/likes/likes.routes.js";
+import commentsRoutes from "./modules/comments/comments.routes.js";
 
 dotenv.config();
 
@@ -24,6 +26,8 @@ app.use(cookieParser());
 // Mounting routes
 app.use("/api/auth", authRoutes);
 app.use("/api/posts", postsRoutes);
+app.use("/api/likes", likesRoutes);
+app.use("/api/comments", commentsRoutes);
 
 // Database Health Check Route
 app.get("/api/health", async (_req, res) => {

@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { toggleLike } from "./likes.controller.js";
+import { createComment } from "./comments.controller.js";
 import { requireAuth } from "../../shared/middleware/auth.middleware.js";
 
 const router = Router();
 
-// Full path: POST /api/likes/:postId
-router.post("/:postId", requireAuth, toggleLike);
+// Full path: POST /api/comments/:postId
+router.post("/:postId", requireAuth, createComment);
 
 export default router;
