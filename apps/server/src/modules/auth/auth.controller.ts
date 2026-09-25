@@ -39,3 +39,35 @@ export const createGuestSession = async (_req: Request, res: Response) => {
         res.status(500).json({ error: "Failed to initialize guest sandbox"});
     }
 };
+
+export const getCurrentUser = async (req: Request, res: Response) => {
+    try {
+        const userId = req.user?.userId;
+
+        if(!userId) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const user = await db.orm.public.User?.where({ id: userId }).first();
+
+        if(!user) {
+            return res.status(404).json({ error: "User not found"});
+        }
+
+        res.json({
+            status: "success",
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                profilePictureUrl: user.profilePictureUrl,
+                bio: user.bio,
+                isGuestSandbox: user.isGuestSandbox,
+                createdAt: user.createAt,
+            },
+        });
+    } catch (error) {
+        console.error("Get User Error:", error);
+        res.status(500).json({ error: "Failed to fetch user profile" });
+    }
+};
