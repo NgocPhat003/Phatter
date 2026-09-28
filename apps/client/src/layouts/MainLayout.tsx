@@ -22,48 +22,55 @@ export const MainLayout = ({ children, currentUser, onLogout }: MainLayoutProps)
     <div className={styles.layoutContainer}>
       <aside className={styles.sidebar}>
         <div>
-          <div className={styles.brand}>
+          <div className={styles.brand} title="Phatter">
             <Feather size={24} />
-            <span>Phatter</span>
+            <span className={styles.brandText}>Phatter</span>
           </div>
 
           <nav className={styles.navLinks}>
-            <button className={`${styles.navItem} ${styles.activeNavItem}`}>
-              <Compass size={18} />
-              <span>Timeline</span>
+            <button
+              className={`${styles.navItem} ${styles.activeNavItem}`}
+              title="Timeline"
+            >
+              <Compass size={20} />
+              <span className={styles.navLabel}>Timeline</span>
             </button>
-            <button className={styles.navItem}>
-              <Hash size={18} />
-              <span>Hashtags</span>
+            <button className={styles.navItem} title="Hashtags">
+              <Hash size={20} />
+              <span className={styles.navLabel}>Hashtags</span>
             </button>
-            <button className={styles.navItem}>
-              <MessageSquare size={18} />
-              <span>Messages</span>
+            <button className={styles.navItem} title="Messages">
+              <MessageSquare size={20} />
+              <span className={styles.navLabel}>Messages</span>
             </button>
-            <button className={styles.navItem}>
-              <Users size={18} />
-              <span>Directory</span>
+            <button className={styles.navItem} title="Directory">
+              <Users size={20} />
+              <span className={styles.navLabel}>Directory</span>
             </button>
-            <button className={styles.navItem}>
-              <Settings size={18} />
-              <span>Settings</span>
+            <button className={styles.navItem} title="Settings">
+              <Settings size={20} />
+              <span className={styles.navLabel}>Settings</span>
             </button>
           </nav>
         </div>
 
         <div className={styles.sidebarBottom}>
-          <button className={styles.utilityBtn}>
-            <Moon size={16} />
-            <span>Dark Mode</span>
+          <button className={styles.utilityBtn} title="Dark Mode">
+            <Moon size={18} />
+            <span className={styles.utilityLabel}>Dark Mode</span>
           </button>
 
-          <button className={styles.utilityBtn} onClick={onLogout}>
-            <LogOut size={16} />
-            <span>Log Out</span>
+          <button
+            className={styles.utilityBtn}
+            onClick={onLogout}
+            title="Log Out"
+          >
+            <LogOut size={18} />
+            <span className={styles.utilityLabel}>Log Out</span>
           </button>
 
           {currentUser && (
-            <div className={styles.userCard}>
+            <div className={styles.userCard} title={currentUser}>
               <div className={styles.userInitialAvatar}>
                 {currentUser.slice(0, 1).toUpperCase()}
               </div>
