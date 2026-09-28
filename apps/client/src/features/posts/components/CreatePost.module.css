@@ -1,0 +1,135 @@
+.card {
+  background-color: #ffffff;
+  border: 1px solid #f0f2f5;
+  border-radius: 16px;
+  padding: 16px 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  margin-bottom: 24px;
+}
+
+.composerTop {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.avatarInitial {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: #e5e7eb;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.textarea {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #1f2937;
+  resize: none;
+  min-height: 80px;
+  background: transparent;
+}
+
+.textarea::placeholder {
+  color: #9ca3af;
+}
+
+.previewContainer {
+  position: relative;
+  margin: 12px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  max-height: 240px;
+  border: 1px solid #e5e7eb;
+}
+
+.previewImg {
+  width: 100%;
+  max-height: 240px;
+  object-fit: cover;
+  display: block;
+}
+
+.removeImgBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.composerBottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 12px;
+}
+
+.addImageBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #4b5563;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 6px 0;
+}
+
+.addImageBtn:hover {
+  color: #111827;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.publishBtn {
+  background-color: #10b981;
+  color: #ffffff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.15s ease;
+}
+
+.publishBtn:hover:not(:disabled) {
+  background-color: #059669;
+}
+
+.publishBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.errorMessage {
+  color: #ef4444;
+  font-size: 0.8rem;
+  margin-top: 8px;
+}

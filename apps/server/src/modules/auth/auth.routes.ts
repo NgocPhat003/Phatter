@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createGuestSession, getCurrentUser } from "./auth.controller.js";
+import { createGuestSession, getCurrentUser, logout } from "./auth.controller.js";
 import { requireAuth } from "../../shared/middleware/auth.middleware.js";
 
 const router = Router();
@@ -10,4 +10,6 @@ router.post("/guest", createGuestSession);
 // Protected route: Fetch logged-in user's profile
 router.get("/me", requireAuth, getCurrentUser);
 
+// Log out
+router.post("/logout", logout);
 export default router;

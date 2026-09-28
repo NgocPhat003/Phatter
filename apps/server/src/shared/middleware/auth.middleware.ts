@@ -19,3 +19,19 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
     return res.status(401).json({ error: "Invalid or expired session token" });
   }
 };
+
+export const optionalAuth = (req: Request, _res: Response, next: NextFunction) => {
+  try {
+    const token =
+      req.cookies?.[jwtConfig.cookieName] ||
+      req.headers.authorization?.replace(/^Bearer\s+/, "");
+
+    if (token) {
+      const decoded = verifyAuthToken(token);
+      req.user = decoded;
+    }
+  } catch {
+    // Token is invalid or expired; proceed as unauthenticated visitor
+  }
+  next();
+};

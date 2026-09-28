@@ -10,6 +10,7 @@ import postsRoutes from "./modules/posts/posts.routes.js";
 import likesRoutes from "./modules/likes/likes.routes.js";
 import commentsRoutes from "./modules/comments/comments.routes.js";
 import uploadsRoutes from "./modules/uploads/uploads.routes.js";
+import usersRoutes from "./modules/users/users.routes.js";
 
 dotenv.config();
 
@@ -30,6 +31,8 @@ app.use("/api/posts", postsRoutes);
 app.use("/api/likes", likesRoutes);
 app.use("/api/comments", commentsRoutes);
 app.use("/api/uploads", uploadsRoutes);
+app.use("/api/users", usersRoutes);
+
 
 // Database Health Check Route
 app.get("/api/health", async (_req, res) => {

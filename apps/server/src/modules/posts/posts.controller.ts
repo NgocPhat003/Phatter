@@ -31,47 +31,61 @@ export const createPost = async (req: Request, res: Response) => {
     }
 };
 
-export const getPosts = async (_req: Request, res: Response) => {
-    try {
-        // Fetch all posts and sort the newest first
-        const posts = await db.orm.public.Post.all();
-        posts.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
-        // Map over each post to attach the post author, likes and comments
-        const enrichedPosts = await Promise.all(
-            posts.map(async (post) => {
-                // Fetch author's public profile data
-                const author = await db.orm.public.User?.where({ id: post.authorId }).first();
+export const getPosts = async (req: Request, res: Response) => {
+  try {
 
-                // Fetch engagement metrics
-                const likes = await db.orm.public.Like?.where({ postId: post.id }).all();
-                const comments = await db.orm.public.Comment?.where({ postId: post.id }).all();
+    const currentUserId = 
+      (req as any).user?.userId ||
+      (req as any).user?.id ||
+      (req as any).user?.sub;
 
-                return {
-                    id: post.id,
-                    content: post.content,
-                    imageUrl: post.imageUrl,
-                    createdAt: post.createdAt,
-                    author: author ? {
-                        id: author.id,
-                        username: author.username,
-                        profilePictureUrl: author.profilePictureUrl,
-                        isGuestSandbox: author.isGuestSandbox,
-                    } : null,
-                    engagement: {
-                        likesCount: likes.length,
-                        commentsCount: comments.length,
-                    }
-                };
+    const posts = await db.orm.public.Post.all();
+    posts.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+
+    const enrichedPosts = await Promise.all(
+      posts.map(async (post) => {
+        const author = await db.orm.public.User.where({ id: post.authorId }).first();
+        const likes = await db.orm.public.Like.where({ postId: post.id }).all();
+        const comments = await db.orm.public.Comment.where({ postId: post.id }).all();
+        
+        // Compare using String() to prevent type mismatch issues
+       const isLiked = Boolean(
+          currentUserId &&
+            likes.some((like: any) => {
+              const likeOwner = like.userId || like.authorId || like.user_id;
+              return String(likeOwner) === String(currentUserId);
             })
         );
 
-        res.json({
-            status: "success",
-            count: enrichedPosts?.length,
-            posts: enrichedPosts,
-        });
-    } catch (error) {
-        console.error("Get Posts Error:", error);
-        res.status(500).json({ error: "Failed to fetch feed" });
-    }
+        return {
+          id: post.id,
+          content: post.content,
+          imageUrl: post.imageUrl,
+          createdAt: post.createdAt,
+          author: author
+            ? {
+                id: author.id,
+                username: author.username,
+                profilePictureUrl: author.profilePictureUrl,
+                isGuestSandbox: author.isGuestSandbox,
+              }
+            : null,
+          engagement: {
+            likesCount: likes.length,
+            commentsCount: comments.length,
+            isLiked,
+          },
+        };
+      })
+    );
+
+    res.json({
+      status: "success",
+      count: enrichedPosts.length,
+      posts: enrichedPosts,
+    });
+  } catch (error) {
+    console.error("Get Posts Error:", error);
+    res.status(500).json({ error: "Failed to fetch feed" });
+  }
 };

@@ -69,3 +69,20 @@ export const getCurrentUser = async (req: Request, res: Response) => {
         res.status(500).json({ error: "Failed to fetch user profile" });
     }
 };
+
+export const logout = (_req: Request, res: Response) => {
+  const cookieOptions = {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+  };
+
+  res.clearCookie("token", cookieOptions);
+  res.clearCookie("jwt", cookieOptions);
+  res.clearCookie("session", cookieOptions);
+
+  res.json({
+    status: "success",
+    message: "Logged out successfully",
+  });
+};
