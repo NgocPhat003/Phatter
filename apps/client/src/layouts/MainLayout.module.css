@@ -1,24 +1,27 @@
 .layoutContainer {
   display: flex;
-  flex-direction: row;
+  flex-direction: row; /* Keep sidebar and feed side-by-side at all times */
   min-height: 100vh;
   background-color: #f7f9fa;
+  width: 100%;
 }
 
-/* Left Sidebar */
+/* Left Sidebar - Full Desktop */
 .sidebar {
   width: 250px;
-  flex-shrink: 0;
+  flex-shrink: 0; /* Prevents the sidebar from collapsing when window shrinks */
   background-color: #ffffff;
   border-right: 1px solid #edf2f7;
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* Keep icons stacked vertically */
   justify-content: space-between;
   padding: 24px 16px;
   position: sticky;
   top: 0;
   height: 100vh;
   box-sizing: border-box;
+  transition: width 0.15s ease, padding 0.15s ease;
+  z-index: 50;
 }
 
 .brand {
@@ -27,7 +30,7 @@
   gap: 10px;
   font-size: 1.35rem;
   font-weight: 800;
-  color: #10b981; /* Matching the accent green/teal in the UI */
+  color: #10b981;
   margin-bottom: 28px;
   padding: 0 8px;
 }
@@ -35,7 +38,7 @@
 .navLinks {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .navItem {
@@ -43,7 +46,7 @@
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
-  border-radius: 10px;
+  border-radius: 9999px;
   font-size: 0.95rem;
   font-weight: 500;
   color: #4b5563;
@@ -51,7 +54,7 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
   width: 100%;
   text-align: left;
 }
@@ -67,11 +70,11 @@
   font-weight: 600;
 }
 
-/* Sidebar Bottom Section */
+/* Sidebar Bottom (Dark Mode, Log Out, User Info) */
 .sidebarBottom {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   border-top: 1px solid #f3f4f6;
   padding-top: 16px;
 }
@@ -86,8 +89,9 @@
   font-size: 0.9rem;
   color: #6b7280;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 9999px;
   transition: background-color 0.15s ease;
+  width: 100%;
 }
 
 .utilityBtn:hover {
@@ -99,14 +103,14 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
-  border-radius: 10px;
+  padding: 6px 8px;
+  border-radius: 9999px;
   background-color: #f9fafb;
 }
 
 .userInitialAvatar {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background-color: #10b981;
   color: #ffffff;
@@ -127,41 +131,32 @@
   white-space: nowrap;
 }
 
-.guestLoginBtn {
-  background-color: #10b981;
-  color: #ffffff;
-  border: none;
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  width: 100%;
-}
-
-/* Center Content */
+/* Feed Column */
 .mainFeedArea {
   flex: 1;
-  min-width: 0;
+  min-width: 0; /* Prevents overflow issues when viewport is small */
   max-width: 680px;
   margin: 0 auto;
-  padding: 32px 20px;
+  padding: 24px 16px;
 }
 
+/* =========================================================
+   Small / Narrow Windows: Lock to Left Icon Rail (like X)
+   ========================================================= */
 @media (max-width: 1080px) {
   .sidebar {
-    width: 72px;
+    width: 68px;
     padding: 20px 8px;
     align-items: center;
   }
 
-  /* Center the logo and hide textual brand name */
   .brand {
     justify-content: center;
     padding: 0;
     margin-bottom: 20px;
   }
 
+  /* Hide labels, leave only icons */
   .brandText,
   .navLabel,
   .utilityLabel,
@@ -174,10 +169,10 @@
     width: 100%;
   }
 
-  /* Circular button targets like Twitter */
+  /* Circular button targets */
   .navItem {
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
     padding: 0;
     justify-content: center;
     border-radius: 50%;
@@ -189,8 +184,8 @@
   }
 
   .utilityBtn {
-    width: 44px;
-    height: 44px;
+    width: 42px;
+    height: 42px;
     padding: 0;
     justify-content: center;
     border-radius: 50%;
@@ -200,48 +195,5 @@
     padding: 0;
     background: transparent;
     justify-content: center;
-  }
-}
-
-/* Mobile: Bottom navigation bar */
-@media (max-width: 600px) {
-  .layoutContainer {
-    flex-direction: column-reverse;
-  }
-
-  .sidebar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    height: 56px;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-around;
-    padding: 0 12px;
-    border-right: none;
-    border-top: 1px solid #edf2f7;
-    z-index: 50;
-  }
-
-  .brand,
-  .sidebarBottom {
-    display: none;
-  }
-
-  .navLinks {
-    flex-direction: row;
-    justify-content: space-around;
-    width: 100%;
-  }
-
-  .navItem {
-    width: 44px;
-    height: 44px;
-  }
-
-  .mainFeedArea {
-    padding: 16px 12px 72px 12px;
   }
 }
