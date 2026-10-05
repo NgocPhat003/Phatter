@@ -39,12 +39,13 @@ export const getPosts = async (req: Request, res: Response) => {
       (req as any).user?.id ||
       (req as any).user?.sub;
 
-    const { realm, sort } = req.query;
+    const { realm, feed, sort } = req.query;
 
     let posts = await db.orm.public.Post.all();
 
-    // Personal realm filter: only show posts from people followed + self
-    if (realm === "personal" && currentUserId) {
+    // Following feed filter: only show posts from people followed + self
+    const isFollowingFeed = feed === "following" || realm === "personal" || realm === "following";
+    if (isFollowingFeed && currentUserId) {
       const followings =
         (await db.orm.public.Follows?.where({ followerId: currentUserId }).all()) || [];
       const allowedAuthorIds = new Set(followings.map((f: any) => String(f.followingId)));

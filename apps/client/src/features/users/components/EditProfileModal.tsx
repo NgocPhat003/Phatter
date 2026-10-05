@@ -112,7 +112,7 @@ export const EditProfileModal = ({
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 maxLength={160}
-                placeholder="Tell the realm about yourself..."
+                placeholder="Tell the world about yourself..."
                 rows={3}
               />
             </div>

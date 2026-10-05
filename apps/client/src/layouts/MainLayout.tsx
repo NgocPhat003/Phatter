@@ -14,17 +14,23 @@ import styles from "./MainLayout.module.css";
 interface MainLayoutProps {
   children: ReactNode;
   currentUser: string | null;
+  currentUserAvatar?: string | null;
+  activeView?: "timeline" | "directory" | "profile";
   onLogout: () => void;
   onOpenProfile?: (username: string) => void;
   onGoHome?: () => void;
+  onOpenDirectory?: () => void;
 }
 
 export const MainLayout = ({
   children,
   currentUser,
+  currentUserAvatar,
+  activeView = "timeline",
   onLogout,
   onOpenProfile,
   onGoHome,
+  onOpenDirectory,
 }: MainLayoutProps) => {
   return (
     <div className={styles.layoutContainer}>
@@ -42,7 +48,9 @@ export const MainLayout = ({
 
           <nav className={styles.navLinks}>
             <button
-              className={`${styles.navItem} ${styles.activeNavItem}`}
+              className={`${styles.navItem} ${
+                activeView === "timeline" ? styles.activeNavItem : ""
+              }`}
               title="Timeline"
               onClick={onGoHome}
             >
@@ -57,7 +65,13 @@ export const MainLayout = ({
               <MessageSquare size={20} />
               <span className={styles.navLabel}>Messages</span>
             </button>
-            <button className={styles.navItem} title="Directory">
+            <button
+              className={`${styles.navItem} ${
+                activeView === "directory" ? styles.activeNavItem : ""
+              }`}
+              title="Directory"
+              onClick={onOpenDirectory}
+            >
               <Users size={20} />
               <span className={styles.navLabel}>Directory</span>
             </button>
@@ -91,7 +105,15 @@ export const MainLayout = ({
               style={{ cursor: "pointer" }}
             >
               <div className={styles.userInitialAvatar}>
-                {currentUser.slice(0, 1).toUpperCase()}
+                {currentUserAvatar ? (
+                  <img
+                    src={currentUserAvatar}
+                    alt={currentUser}
+                    className={styles.avatarImg}
+                  />
+                ) : (
+                  currentUser.slice(0, 1).toUpperCase()
+                )}
               </div>
               <span className={styles.usernameDisplay}>{currentUser}</span>
             </div>

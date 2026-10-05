@@ -214,3 +214,80 @@ export const unfollowUser = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to unfollow user" });
   }
 };
+
+export const getUsersDirectory = async (req: Request, res: Response) => {
+  try {
+    const currentUserId =
+      (req as any).user?.userId ||
+      (req as any).user?.id ||
+      (req as any).user?.sub;
+
+    const { search, filter } = req.query;
+
+    // 1. Fetch all users from database
+    let users = (await db.orm.public.User?.all()) || [];
+
+    // Filter by search query (username or bio) if provided
+    if (search && typeof search === "string" && search.trim()) {
+      const q = search.trim().toLowerCase();
+      users = users.filter((u: any) => {
+        const usernameMatch = u.username && u.username.toLowerCase().includes(q);
+        const bioMatch = u.bio && u.bio.toLowerCase().includes(q);
+        return usernameMatch || bioMatch;
+      });
+    }
+
+    // 2. Fetch current user's followings if logged in
+    const currentUserFollowings = currentUserId
+      ? (await db.orm.public.Follows?.where({ followerId: currentUserId }).all()) || []
+      : [];
+    const followingSet = new Set(currentUserFollowings.map((f: any) => String(f.followingId)));
+
+    // 3. Enrich each user with follower count, following count, post count, and follow state
+    const enrichedUsers = await Promise.all(
+      users.map(async (u: any) => {
+        const followers = (await db.orm.public.Follows?.where({ followingId: u.id }).all()) || [];
+        const followings = (await db.orm.public.Follows?.where({ followerId: u.id }).all()) || [];
+        const posts = (await db.orm.public.Post?.where({ authorId: u.id }).all()) || [];
+
+        return {
+          id: u.id,
+          username: u.username,
+          profilePictureUrl: u.profilePictureUrl,
+          bio: u.bio,
+          isGuestSandbox: u.isGuestSandbox,
+          createdAt: u.createdAt,
+          followersCount: followers.length,
+          followingCount: followings.length,
+          postsCount: posts.length,
+          isFollowing: followingSet.has(String(u.id)),
+          isSelf: Boolean(currentUserId && String(u.id) === String(currentUserId)),
+        };
+      })
+    );
+
+    // 4. Handle "suggestions" filter ("Who to Follow")
+    if (filter === "suggestions" && currentUserId) {
+      const suggestions = enrichedUsers
+        .filter((u) => !u.isSelf && !u.isFollowing)
+        .sort((a, b) => b.followersCount - a.followersCount);
+      return res.json({ status: "success", users: suggestions });
+    }
+
+    // Default ("all"): Sort real users first, then by followersCount descending
+    enrichedUsers.sort((a, b) => {
+      if (a.isGuestSandbox !== b.isGuestSandbox) {
+        return a.isGuestSandbox ? 1 : -1;
+      }
+      return b.followersCount - a.followersCount;
+    });
+
+    res.json({
+      status: "success",
+      users: enrichedUsers,
+    });
+  } catch (error) {
+    console.error("Get Users Directory Error:", error);
+    res.status(500).json({ error: "Failed to fetch user directory" });
+  }
+};

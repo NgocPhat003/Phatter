@@ -6,6 +6,7 @@ import styles from "./CommentSection.module.css";
 interface CommentSectionProps {
   postId: string;
   currentUser: string | null;
+  currentUserAvatar?: string | null;
   onRequireLogin: () => void;
   onCommentCountChange?: (delta: number) => void;
   onOpenProfile?: (username: string) => void;
@@ -14,6 +15,7 @@ interface CommentSectionProps {
 export const CommentSection = ({
   postId,
   currentUser,
+  currentUserAvatar,
   onRequireLogin,
   onCommentCountChange,
   onOpenProfile,
@@ -96,7 +98,19 @@ export const CommentSection = ({
       {/* Comment Input */}
       {currentUser ? (
         <div className={styles.inputArea}>
-          <div className={styles.inputAvatar}>You</div>
+          <div className={styles.inputAvatar}>
+            {currentUserAvatar ? (
+              <img
+                src={currentUserAvatar}
+                alt={currentUser || "Avatar"}
+                className={styles.avatarImg}
+              />
+            ) : currentUser ? (
+              currentUser.slice(0, 1).toUpperCase()
+            ) : (
+              "You"
+            )}
+          </div>
           <div className={styles.inputWrapper}>
             <textarea
               ref={textareaRef}

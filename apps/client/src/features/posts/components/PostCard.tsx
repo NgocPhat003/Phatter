@@ -8,6 +8,7 @@ import styles from "./PostCard.module.css";
 interface PostCardProps {
   post: Post;
   currentUser: string | null;
+  currentUserAvatar?: string | null;
   onRequireLogin: () => void;
   onPostUpdated?: () => void;
   onOpenProfile?: (username: string) => void;
@@ -16,6 +17,7 @@ interface PostCardProps {
 export const PostCard = ({
   post,
   currentUser,
+  currentUserAvatar,
   onRequireLogin,
   onPostUpdated: _onPostUpdated,
   onOpenProfile,
@@ -148,6 +150,7 @@ export const PostCard = ({
         <CommentSection
           postId={post.id}
           currentUser={currentUser}
+          currentUserAvatar={currentUserAvatar}
           onRequireLogin={onRequireLogin}
           onCommentCountChange={handleCommentCountChange}
           onOpenProfile={onOpenProfile}

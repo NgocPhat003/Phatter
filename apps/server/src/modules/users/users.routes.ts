@@ -4,10 +4,14 @@ import {
   updateUserProfile,
   followUser,
   unfollowUser,
+  getUsersDirectory,
 } from "./users.controller.js";
 import { requireAuth, optionalAuth } from "../../shared/middleware/auth.middleware.js";
 
 const router: Router = Router();
+
+// User directory & suggestions: GET /api/users
+router.get("/", optionalAuth, getUsersDirectory);
 
 // Current user profile update: PATCH /api/users/me
 router.patch("/me", requireAuth, updateUserProfile);

@@ -1,25 +1,27 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { api } from "./lib/api";
 import { Login } from "./routes/Login";
 import { Home } from "./routes/Home";
+import type { CurrentUser } from "./features/posts/types/types";
 
 function App() {
-  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
-  useEffect(() => {
-    api
-      .get("/auth/me")
-      .then((res) => {
-        setCurrentUser(res.data.user.username);
-      })
-      .catch(() => {
-        setCurrentUser(null);
-      })
-      .finally(() => {
-        setCheckingAuth(false);
-      });
+  const fetchSession = useCallback(async () => {
+    try {
+      const res = await api.get("/auth/me");
+      setCurrentUser(res.data.user);
+    } catch {
+      setCurrentUser(null);
+    } finally {
+      setCheckingAuth(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchSession();
+  }, [fetchSession]);
 
   const handleLogout = async () => {
     try {
@@ -50,10 +52,16 @@ function App() {
   }
 
   if (!currentUser) {
-    return <Login onLoginSuccess={(username) => setCurrentUser(username)} />;
+    return <Login onLoginSuccess={() => fetchSession()} />;
   }
 
-  return <Home currentUser={currentUser} onLogout={handleLogout} />;
+  return (
+    <Home
+      currentUser={currentUser}
+      onLogout={handleLogout}
+      onProfileUpdated={() => fetchSession()}
+    />
+  );
 }
 
 export default App;

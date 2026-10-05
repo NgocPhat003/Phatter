@@ -9,10 +9,10 @@
   margin-bottom: 16px;
 }
 
-/* Realm Switcher Tabs */
+/* Feed Switcher Tabs (For you / Following) */
 .realmTabs {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   margin-bottom: 14px;
 }
 
@@ -25,14 +25,21 @@
   border: none;
   background: transparent;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 500;
   color: #6b7280;
   cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.realmTab:hover {
+  background-color: #f3f4f6;
+  color: #111827;
 }
 
 .activeRealmTab {
-  background-color: #d1fae5;
-  color: #065f46;
+  background-color: #ecfdf5;
+  color: #059669;
+  font-weight: 600;
 }
 
 /* Filter Pills */

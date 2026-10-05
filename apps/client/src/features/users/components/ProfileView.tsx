@@ -9,17 +9,21 @@ import styles from "./ProfileView.module.css";
 interface ProfileViewProps {
   username: string;
   currentUser: string | null;
+  currentUserAvatar?: string | null;
   onBack: () => void;
   onRequireLogin: () => void;
   onOpenProfile?: (username: string) => void;
+  onProfileUpdated?: () => void;
 }
 
 export const ProfileView = ({
   username,
   currentUser,
+  currentUserAvatar,
   onBack,
   onRequireLogin,
   onOpenProfile,
+  onProfileUpdated,
 }: ProfileViewProps) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -212,6 +216,7 @@ export const ProfileView = ({
               key={post.id}
               post={post}
               currentUser={currentUser}
+              currentUserAvatar={currentUserAvatar}
               onRequireLogin={onRequireLogin}
               onPostUpdated={fetchProfile}
               onOpenProfile={onOpenProfile}
@@ -229,9 +234,11 @@ export const ProfileView = ({
           onClose={() => setIsEditing(false)}
           onProfileUpdated={(updated) => {
             setProfile((prev) => (prev ? { ...prev, ...updated } : null));
+            onProfileUpdated?.();
           }}
         />
       )}
     </div>
   );
 };
+

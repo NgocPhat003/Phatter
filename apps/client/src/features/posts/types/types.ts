@@ -37,3 +37,26 @@ export interface UserProfile {
   isFollowing: boolean;
   isSelf: boolean;
 }
+
+export interface DirectoryUser {
+  id: string;
+  username: string;
+  profilePictureUrl: string | null;
+  bio: string | null;
+  isGuestSandbox: boolean;
+  createdAt: string;
+  followersCount: number;
+  followingCount: number;
+  postsCount: number;
+  isFollowing: boolean;
+  isSelf: boolean;
+}
+
+export interface CurrentUser {
+  id?: string;
+  username: string;
+  email?: string;
+  profilePictureUrl?: string | null;
+  bio?: string | null;
+  isGuestSandbox?: boolean;
+}

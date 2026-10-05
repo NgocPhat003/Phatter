@@ -5,10 +5,15 @@ import styles from "./CreatePost.module.css";
 
 interface CreatePostProps {
   currentUser: string | null;
+  currentUserAvatar?: string | null;
   onPostCreated: () => void;
 }
 
-export const CreatePost = ({ currentUser, onPostCreated }: CreatePostProps) => {
+export const CreatePost = ({
+  currentUser,
+  currentUserAvatar,
+  onPostCreated,
+}: CreatePostProps) => {
   const [content, setContent] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -64,13 +69,19 @@ export const CreatePost = ({ currentUser, onPostCreated }: CreatePostProps) => {
     <form className={styles.card} onSubmit={handleSubmit}>
       <div className={styles.composerTop}>
         <div className={styles.avatarInitial}>
-          {currentUser ? currentUser.slice(0, 1).toUpperCase() : "G"}
+          {currentUserAvatar ? (
+            <img src={currentUserAvatar} alt="Avatar" className={styles.avatarImg} />
+          ) : currentUser ? (
+            currentUser.slice(0, 1).toUpperCase()
+          ) : (
+            "G"
+          )}
         </div>
         <textarea
           className={styles.textarea}
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="What's unfolding in the realm?"
+          placeholder="What is happening?!"
           rows={3}
         />
       </div>

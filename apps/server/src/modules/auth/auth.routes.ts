@@ -1,15 +1,40 @@
 import { Router } from "express";
-import { createGuestSession, getCurrentUser, logout } from "./auth.controller.js";
+import {
+  createGuestSession,
+  getCurrentUser,
+  logout,
+  login,
+  register,
+  initiateGithubAuth,
+  handleGithubCallback,
+  initiateGoogleAuth,
+  handleGoogleCallback,
+  mockOAuthLogin,
+} from "./auth.controller.js";
 import { requireAuth } from "../../shared/middleware/auth.middleware.js";
 
-const router = Router();
+const router: Router = Router();
 
-// Public route: Mint a new sandbox account
+// Guest Sandbox Access
 router.post("/guest", createGuestSession);
 
-// Protected route: Fetch logged-in user's profile
-router.get("/me", requireAuth, getCurrentUser);
+// Standard Login & Register
+router.post("/login", login);
+router.post("/register", register);
 
-// Log out
+// GitHub OAuth
+router.get("/github", initiateGithubAuth);
+router.get("/github/callback", handleGithubCallback);
+
+// Google (Gmail) OAuth
+router.get("/google", initiateGoogleAuth);
+router.get("/google/callback", handleGoogleCallback);
+
+// Mock / Development Social Login (Instant testing without API keys)
+router.get("/mock-oauth", mockOAuthLogin);
+
+// Current User & Logout
+router.get("/me", requireAuth, getCurrentUser);
 router.post("/logout", logout);
+
 export default router;
