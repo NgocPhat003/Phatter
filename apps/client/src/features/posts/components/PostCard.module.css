@@ -59,6 +59,21 @@
   color: var(--text-main);
 }
 
+.clickable {
+  cursor: pointer;
+  transition: opacity 0.15s ease, text-decoration 0.15s ease;
+}
+
+.clickable:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+.avatar.clickable:hover {
+  text-decoration: none;
+  opacity: 0.9;
+}
+
 .guestBadge {
   font-size: 0.65rem;
   font-weight: 600;

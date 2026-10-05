@@ -150,6 +150,21 @@
   color: var(--text-main);
 }
 
+.clickable {
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.clickable:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+.commentAvatar.clickable:hover {
+  text-decoration: none;
+  opacity: 0.9;
+}
+
 .commentGuestBadge {
   font-size: 0.6rem;
   font-weight: 600;

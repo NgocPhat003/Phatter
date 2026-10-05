@@ -8,6 +8,7 @@ interface CommentSectionProps {
   currentUser: string | null;
   onRequireLogin: () => void;
   onCommentCountChange?: (delta: number) => void;
+  onOpenProfile?: (username: string) => void;
 }
 
 export const CommentSection = ({
@@ -15,6 +16,7 @@ export const CommentSection = ({
   currentUser,
   onRequireLogin,
   onCommentCountChange,
+  onOpenProfile,
 }: CommentSectionProps) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -138,7 +140,16 @@ export const CommentSection = ({
         <div className={styles.list}>
           {comments.map((comment) => (
             <div key={comment.id} className={styles.comment}>
-              <div className={styles.commentAvatar}>
+              <div
+                className={`${styles.commentAvatar} ${
+                  comment.author?.username ? styles.clickable : ""
+                }`}
+                onClick={() =>
+                  comment.author?.username && onOpenProfile?.(comment.author.username)
+                }
+                role="button"
+                tabIndex={0}
+              >
                 {comment.author?.profilePictureUrl ? (
                   <img
                     src={comment.author.profilePictureUrl}
@@ -151,7 +162,16 @@ export const CommentSection = ({
               </div>
               <div className={styles.commentBody}>
                 <div className={styles.commentHeader}>
-                  <span className={styles.commentAuthor}>
+                  <span
+                    className={`${styles.commentAuthor} ${
+                      comment.author?.username ? styles.clickable : ""
+                    }`}
+                    onClick={() =>
+                      comment.author?.username && onOpenProfile?.(comment.author.username)
+                    }
+                    role="button"
+                    tabIndex={0}
+                  >
                     {comment.author?.username || "Unknown"}
                   </span>
                   {comment.author?.isGuestSandbox && (

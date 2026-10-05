@@ -40,5 +40,9 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@project-phatter/validation": ["../../packages/validation/src/index.ts"]
+    }
   }
 }

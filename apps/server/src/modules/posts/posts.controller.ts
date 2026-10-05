@@ -39,8 +39,19 @@ export const getPosts = async (req: Request, res: Response) => {
       (req as any).user?.id ||
       (req as any).user?.sub;
 
-    const posts = await db.orm.public.Post.all();
-    posts.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+    const { realm, sort } = req.query;
+
+    let posts = await db.orm.public.Post.all();
+
+    // Personal realm filter: only show posts from people followed + self
+    if (realm === "personal" && currentUserId) {
+      const followings =
+        (await db.orm.public.Follows?.where({ followerId: currentUserId }).all()) || [];
+      const allowedAuthorIds = new Set(followings.map((f: any) => String(f.followingId)));
+      allowedAuthorIds.add(String(currentUserId));
+
+      posts = posts.filter((p: any) => allowedAuthorIds.has(String(p.authorId)));
+    }
 
     const enrichedPosts = await Promise.all(
       posts.map(async (post) => {
@@ -78,6 +89,20 @@ export const getPosts = async (req: Request, res: Response) => {
         };
       })
     );
+
+    if (sort === "popular") {
+      enrichedPosts.sort(
+        (a, b) =>
+          b.engagement.likesCount +
+          b.engagement.commentsCount -
+          (a.engagement.likesCount + a.engagement.commentsCount)
+      );
+    } else if (sort === "oldest") {
+      enrichedPosts.sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)));
+    } else {
+      // Default: latest
+      enrichedPosts.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+    }
 
     res.json({
       status: "success",

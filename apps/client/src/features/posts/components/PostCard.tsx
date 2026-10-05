@@ -10,13 +10,15 @@ interface PostCardProps {
   currentUser: string | null;
   onRequireLogin: () => void;
   onPostUpdated?: () => void;
+  onOpenProfile?: (username: string) => void;
 }
 
 export const PostCard = ({
   post,
   currentUser,
   onRequireLogin,
-  onPostUpdated,
+  onPostUpdated: _onPostUpdated,
+  onOpenProfile,
 }: PostCardProps) => {
   const [likesCount, setLikesCount] = useState(post.engagement.likesCount);
   const [isLiked, setIsLiked] = useState(post.engagement.isLiked);
@@ -82,7 +84,12 @@ export const PostCard = ({
   return (
     <article className={styles.card}>
       <header className={styles.header}>
-        <div className={styles.avatar}>
+        <div
+          className={`${styles.avatar} ${post.author?.username ? styles.clickable : ""}`}
+          onClick={() => post.author?.username && onOpenProfile?.(post.author.username)}
+          role="button"
+          tabIndex={0}
+        >
           {post.author?.profilePictureUrl ? (
             <img
               src={post.author.profilePictureUrl}
@@ -95,7 +102,14 @@ export const PostCard = ({
         </div>
         <div className={styles.meta}>
           <div className={styles.userInfo}>
-            <span className={styles.username}>{post.author?.username || "Unknown User"}</span>
+            <span
+              className={`${styles.username} ${post.author?.username ? styles.clickable : ""}`}
+              onClick={() => post.author?.username && onOpenProfile?.(post.author.username)}
+              role="button"
+              tabIndex={0}
+            >
+              {post.author?.username || "Unknown User"}
+            </span>
             {post.author?.isGuestSandbox && <span className={styles.guestBadge}>Guest</span>}
           </div>
           <time className={styles.timestamp}>{formattedDate}</time>
@@ -136,6 +150,7 @@ export const PostCard = ({
           currentUser={currentUser}
           onRequireLogin={onRequireLogin}
           onCommentCountChange={handleCommentCountChange}
+          onOpenProfile={onOpenProfile}
         />
       )}
     </article>

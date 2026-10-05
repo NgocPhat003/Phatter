@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import {
   Feather,
   Compass,
@@ -15,14 +15,27 @@ interface MainLayoutProps {
   children: ReactNode;
   currentUser: string | null;
   onLogout: () => void;
+  onOpenProfile?: (username: string) => void;
+  onGoHome?: () => void;
 }
 
-export const MainLayout = ({ children, currentUser, onLogout }: MainLayoutProps) => {
+export const MainLayout = ({
+  children,
+  currentUser,
+  onLogout,
+  onOpenProfile,
+  onGoHome,
+}: MainLayoutProps) => {
   return (
     <div className={styles.layoutContainer}>
       <aside className={styles.sidebar}>
         <div>
-          <div className={styles.brand} title="Phatter">
+          <div
+            className={styles.brand}
+            title="Phatter"
+            onClick={onGoHome}
+            style={{ cursor: "pointer" }}
+          >
             <Feather size={24} />
             <span className={styles.brandText}>Phatter</span>
           </div>
@@ -31,6 +44,7 @@ export const MainLayout = ({ children, currentUser, onLogout }: MainLayoutProps)
             <button
               className={`${styles.navItem} ${styles.activeNavItem}`}
               title="Timeline"
+              onClick={onGoHome}
             >
               <Compass size={20} />
               <span className={styles.navLabel}>Timeline</span>
@@ -70,7 +84,12 @@ export const MainLayout = ({ children, currentUser, onLogout }: MainLayoutProps)
           </button>
 
           {currentUser && (
-            <div className={styles.userCard} title={currentUser}>
+            <div
+              className={styles.userCard}
+              title={`View @${currentUser}'s profile`}
+              onClick={() => onOpenProfile?.(currentUser)}
+              style={{ cursor: "pointer" }}
+            >
               <div className={styles.userInitialAvatar}>
                 {currentUser.slice(0, 1).toUpperCase()}
               </div>

@@ -24,3 +24,16 @@ export interface Post {
     isLiked: boolean;
   };
 }
+
+export interface UserProfile {
+  id: string;
+  username: string;
+  bio: string | null;
+  profilePictureUrl: string | null;
+  isGuestSandbox: boolean;
+  createdAt: string;
+  followersCount: number;
+  followingCount: number;
+  isFollowing: boolean;
+  isSelf: boolean;
+}
