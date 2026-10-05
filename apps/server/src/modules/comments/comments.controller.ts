@@ -62,7 +62,6 @@ export const createComment = async (req: Request, res: Response) => {
     const newComment = await db.orm.public.Comment.create({
       content: content.trim(),
       postId,
-      userId: currentUserId,
       authorId: currentUserId,
     });
 
