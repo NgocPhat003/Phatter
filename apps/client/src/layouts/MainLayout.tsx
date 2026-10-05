@@ -15,11 +15,12 @@ interface MainLayoutProps {
   children: ReactNode;
   currentUser: string | null;
   currentUserAvatar?: string | null;
-  activeView?: "timeline" | "directory" | "profile";
+  activeView?: "timeline" | "directory" | "profile" | "hashtags";
   onLogout: () => void;
   onOpenProfile?: (username: string) => void;
   onGoHome?: () => void;
   onOpenDirectory?: () => void;
+  onOpenHashtags?: () => void;
 }
 
 export const MainLayout = ({
@@ -31,6 +32,7 @@ export const MainLayout = ({
   onOpenProfile,
   onGoHome,
   onOpenDirectory,
+  onOpenHashtags,
 }: MainLayoutProps) => {
   return (
     <div className={styles.layoutContainer}>
@@ -57,10 +59,17 @@ export const MainLayout = ({
               <Compass size={20} />
               <span className={styles.navLabel}>Timeline</span>
             </button>
-            <button className={styles.navItem} title="Hashtags">
+            <button
+              className={`${styles.navItem} ${
+                activeView === "hashtags" ? styles.activeNavItem : ""
+              }`}
+              title="Hashtags"
+              onClick={onOpenHashtags}
+            >
               <Hash size={20} />
               <span className={styles.navLabel}>Hashtags</span>
             </button>
+
             <button className={styles.navItem} title="Messages">
               <MessageSquare size={20} />
               <span className={styles.navLabel}>Messages</span>

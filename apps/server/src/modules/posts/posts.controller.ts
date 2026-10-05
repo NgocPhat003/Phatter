@@ -39,9 +39,21 @@ export const getPosts = async (req: Request, res: Response) => {
       (req as any).user?.id ||
       (req as any).user?.sub;
 
-    const { realm, feed, sort } = req.query;
+    const { realm, feed, sort, tag, hashtag } = req.query;
 
     let posts = await db.orm.public.Post.all();
+
+    // Hashtag filter: match posts containing #tag
+    const targetTag = (hashtag || tag) as string | undefined;
+    if (targetTag && typeof targetTag === "string" && targetTag.trim()) {
+      const cleanTag = targetTag.trim().replace(/^#/, "").toLowerCase();
+      posts = posts.filter((p: any) => {
+        if (!p.content) return false;
+        const matches = p.content.match(/#([a-zA-Z0-9_]+)/g);
+        if (!matches) return false;
+        return matches.some((m: string) => m.slice(1).toLowerCase() === cleanTag);
+      });
+    }
 
     // Following feed filter: only show posts from people followed + self
     const isFollowingFeed = feed === "following" || realm === "personal" || realm === "following";
@@ -113,5 +125,43 @@ export const getPosts = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Get Posts Error:", error);
     res.status(500).json({ error: "Failed to fetch feed" });
+  }
+};
+
+export const getTrendingHashtags = async (_req: Request, res: Response) => {
+  try {
+    const posts = await db.orm.public.Post.all();
+    const tagCountMap = new Map<string, number>();
+
+    for (const post of posts) {
+      if (!post.content) continue;
+      const matches = post.content.match(/#([a-zA-Z0-9_]+)/g);
+      if (matches) {
+        const seenInPost = new Set<string>();
+        for (const rawTag of matches) {
+          const lower = rawTag.toLowerCase();
+          if (!seenInPost.has(lower)) {
+            seenInPost.add(lower);
+            tagCountMap.set(lower, (tagCountMap.get(lower) || 0) + 1);
+          }
+        }
+      }
+    }
+
+    const hashtags = Array.from(tagCountMap.entries())
+      .map(([tag, postCount]) => ({
+        tag,
+        name: tag.slice(1),
+        postCount,
+      }))
+      .sort((a, b) => b.postCount - a.postCount);
+
+    res.json({
+      status: "success",
+      hashtags,
+    });
+  } catch (error) {
+    console.error("Get Trending Hashtags Error:", error);
+    res.status(500).json({ error: "Failed to fetch trending hashtags" });
   }
 };

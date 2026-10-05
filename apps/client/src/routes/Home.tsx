@@ -5,6 +5,7 @@ import { PostCard } from "../features/posts/components/PostCard";
 import { CreatePost } from "../features/posts/components/CreatePost";
 import { ProfileView } from "../features/users/components/ProfileView";
 import { UserDirectory } from "../features/users/components/UserDirectory";
+import { HashtagsExplore } from "../features/hashtags/components/HashtagsExplore";
 import { MainLayout } from "../layouts/MainLayout";
 import { Spinner } from "../components/common/Spinner";
 import { Globe, Users, Clock, Flame, History } from "lucide-react";
@@ -24,10 +25,17 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
     typeof currentUser === "object" ? currentUser?.profilePictureUrl : null;
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentView, setCurrentView] = useState<"timeline" | "directory">("timeline");
+  const [currentView, setCurrentView] = useState<"timeline" | "directory" | "hashtags">("timeline");
+  const [selectedHashtag, setSelectedHashtag] = useState<string | null>(null);
   const [activeFeed, setActiveFeed] = useState<"for-you" | "following">("for-you");
   const [activeSort, setActiveSort] = useState<"latest" | "popular" | "oldest">("latest");
   const [viewingProfile, setViewingProfile] = useState<string | null>(null);
+
+  const handleSelectHashtag = (tag: string) => {
+    setViewingProfile(null);
+    setSelectedHashtag(tag);
+    setCurrentView("hashtags");
+  };
 
   const fetchFeed = useCallback(async () => {
     try {
@@ -62,11 +70,17 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
       onOpenProfile={(u) => setViewingProfile(u)}
       onGoHome={() => {
         setViewingProfile(null);
+        setSelectedHashtag(null);
         setCurrentView("timeline");
       }}
       onOpenDirectory={() => {
         setViewingProfile(null);
         setCurrentView("directory");
+      }}
+      onOpenHashtags={() => {
+        setViewingProfile(null);
+        setSelectedHashtag(null);
+        setCurrentView("hashtags");
       }}
     >
       {viewingProfile ? (
@@ -77,6 +91,7 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
           onBack={() => setViewingProfile(null)}
           onRequireLogin={() => {}}
           onOpenProfile={(u) => setViewingProfile(u)}
+          onSelectHashtag={handleSelectHashtag}
           onProfileUpdated={() => {
             onProfileUpdated?.();
             fetchFeed();
@@ -89,7 +104,20 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
           onBackToTimeline={() => setCurrentView("timeline")}
           onRequireLogin={() => {}}
         />
+      ) : currentView === "hashtags" ? (
+        <HashtagsExplore
+          initialTag={selectedHashtag}
+          currentUser={currentUsername}
+          currentUserAvatar={currentUserAvatar}
+          onBackToTimeline={() => {
+            setSelectedHashtag(null);
+            setCurrentView("timeline");
+          }}
+          onOpenProfile={(u) => setViewingProfile(u)}
+          onRequireLogin={() => {}}
+        />
       ) : (
+
         <>
           <header className={styles.feedHeader}>
             <h2 className={styles.pageTitle}>Home Feed</h2>
@@ -170,7 +198,9 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
                 onRequireLogin={() => {}}
                 onPostUpdated={fetchFeed}
                 onOpenProfile={(u) => setViewingProfile(u)}
+                onSelectHashtag={handleSelectHashtag}
               />
+
             ))
           )}
         </>

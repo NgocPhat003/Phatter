@@ -12,6 +12,7 @@ interface PostCardProps {
   onRequireLogin: () => void;
   onPostUpdated?: () => void;
   onOpenProfile?: (username: string) => void;
+  onSelectHashtag?: (tag: string) => void;
 }
 
 export const PostCard = ({
@@ -21,6 +22,7 @@ export const PostCard = ({
   onRequireLogin,
   onPostUpdated: _onPostUpdated,
   onOpenProfile,
+  onSelectHashtag,
 }: PostCardProps) => {
   const [likesCount, setLikesCount] = useState(post.engagement.likesCount);
   const [isLiked, setIsLiked] = useState(post.engagement.isLiked);
@@ -118,7 +120,28 @@ export const PostCard = ({
         </div>
       </header>
 
-      <p className={styles.bodyText}>{post.content}</p>
+      <p className={styles.bodyText}>
+        {post.content.split(/(#[a-zA-Z0-9_]+)/g).map((part, index) => {
+          if (part.startsWith("#") && part.length > 1) {
+            return (
+              <span
+                key={index}
+                className={styles.hashtag}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectHashtag?.(part);
+                }}
+                role="button"
+                tabIndex={0}
+                title={`Explore posts tagged with ${part}`}
+              >
+                {part}
+              </span>
+            );
+          }
+          return part;
+        })}
+      </p>
 
       {post.imageUrl && (
         <div className={styles.media}>

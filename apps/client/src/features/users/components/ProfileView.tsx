@@ -17,6 +17,7 @@ interface ProfileViewProps {
   onRequireLogin: () => void;
   onOpenProfile?: (username: string) => void;
   onProfileUpdated?: () => void;
+  onSelectHashtag?: (tag: string) => void;
 }
 
 export const ProfileView = ({
@@ -27,6 +28,7 @@ export const ProfileView = ({
   onRequireLogin,
   onOpenProfile,
   onProfileUpdated,
+  onSelectHashtag,
 }: ProfileViewProps) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -235,7 +237,9 @@ export const ProfileView = ({
               onRequireLogin={onRequireLogin}
               onPostUpdated={fetchProfile}
               onOpenProfile={onOpenProfile}
+              onSelectHashtag={onSelectHashtag}
             />
+
           ))
         )}
       </div>

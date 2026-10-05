@@ -99,6 +99,19 @@
   word-break: break-word;
 }
 
+.hashtag {
+  color: var(--primary, #10b981);
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s ease, text-decoration 0.15s ease;
+}
+
+.hashtag:hover {
+  color: var(--primary-hover, #059669);
+  text-decoration: underline;
+}
+
+
 .media {
   border-radius: 12px;
   overflow: hidden;
