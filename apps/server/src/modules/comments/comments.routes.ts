@@ -1,10 +1,13 @@
 import { Router } from "express";
-import { createComment } from "./comments.controller.js";
-import { requireAuth } from "../../shared/middleware/auth.middleware.js";
+import { getComments, createComment } from "./comments.controller.js";
+import { requireAuth, optionalAuth } from "../../shared/middleware/auth.middleware.js";
 
 const router = Router();
 
-// Full path: POST /api/comments/:postId
+// GET /api/comments/:postId
+router.get("/:postId", optionalAuth, getComments);
+
+// POST /api/comments/:postId
 router.post("/:postId", requireAuth, createComment);
 
 export default router;

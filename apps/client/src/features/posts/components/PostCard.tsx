@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { api } from "../../../lib/api";
 import type { Post } from "../types/types";
 import { Heart, MessageCircle } from "lucide-react";
+import { CommentSection } from "./CommentSection";
 import styles from "./PostCard.module.css";
 
 interface PostCardProps {
@@ -20,11 +21,14 @@ export const PostCard = ({
   const [likesCount, setLikesCount] = useState(post.engagement.likesCount);
   const [isLiked, setIsLiked] = useState(post.engagement.isLiked);
   const [isLiking, setIsLiking] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [commentsCount, setCommentsCount] = useState(post.engagement.commentsCount);
 
   useEffect(() => {
     setLikesCount(post.engagement.likesCount);
     setIsLiked(Boolean(post.engagement.isLiked));
-  }, [post.id, post.engagement.isLiked]);
+    setCommentsCount(post.engagement.commentsCount);
+  }, [post.id, post.engagement.isLiked, post.engagement.commentsCount]);
 
   const handleToggleLike = async () => {
     if (!currentUser) {
@@ -59,6 +63,14 @@ export const PostCard = ({
           setIsLiking(false);
         }
       };
+
+  const handleToggleComments = () => {
+    setShowComments((prev) => !prev);
+  };
+
+  const handleCommentCountChange = (delta: number) => {
+    setCommentsCount((prev) => prev + delta);
+  };
 
   const formattedDate = new Date(post.createdAt).toLocaleDateString(undefined, {
     month: "short",
@@ -108,11 +120,24 @@ export const PostCard = ({
           <Heart size={16} fill={isLiked ? "currentColor" : "none"} />
           <span>{likesCount}</span>
         </button>
-        <span className={styles.actionBtn}>
-          <MessageCircle size={16} />
-          <span>{post.engagement.commentsCount}</span>
-        </span>
+        <button
+          type="button"
+          onClick={handleToggleComments}
+          className={`${styles.actionBtn} ${showComments ? styles.commentsActive : ""}`}
+        >
+          <MessageCircle size={16} fill={showComments ? "currentColor" : "none"} />
+          <span>{commentsCount}</span>
+        </button>
       </footer>
+
+      {showComments && (
+        <CommentSection
+          postId={post.id}
+          currentUser={currentUser}
+          onRequireLogin={onRequireLogin}
+          onCommentCountChange={handleCommentCountChange}
+        />
+      )}
     </article>
   );
 };

@@ -133,6 +133,10 @@
   color: var(--like-active) !important;
 }
 
+.commentsActive {
+  color: var(--primary) !important;
+}
+
 .actionBtn:active:not(:disabled) {
   transform: scale(0.92);
 }

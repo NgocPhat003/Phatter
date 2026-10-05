@@ -5,6 +5,13 @@ export interface Author {
   isGuestSandbox: boolean;
 }
 
+export interface Comment {
+  id: string;
+  content: string;
+  createdAt: string;
+  author: Author | null;
+}
+
 export interface Post {
   id: string;
   content: string;
