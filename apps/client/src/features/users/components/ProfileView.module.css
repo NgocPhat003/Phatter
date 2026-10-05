@@ -194,18 +194,40 @@
 
 .statItem {
   display: flex;
-  gap: 4px;
+  align-items: center;
+  gap: 5px;
   font-size: 0.875rem;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  margin: -4px -8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: inherit;
+  font-family: inherit;
+}
+
+.statItem:hover {
+  background-color: #f1f5f9;
+}
+
+.statItem:hover .statLabel {
+  text-decoration: underline;
+  color: var(--text-main);
 }
 
 .statNumber {
-  font-weight: 700;
+  font-weight: 800;
+  font-size: 0.95rem;
   color: var(--text-main);
 }
 
 .statLabel {
   color: var(--text-muted);
+  font-weight: 500;
 }
+
 
 /* Posts section */
 .timelineTitle {

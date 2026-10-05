@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { LogIn, UserPlus, ShieldAlert } from "lucide-react";
+import { LogIn, UserPlus, ShieldAlert, Loader2 } from "lucide-react";
 import { api } from "../lib/api";
+
 import styles from "./Login.module.css";
 
 interface LoginProps {
@@ -180,7 +181,11 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
             </div>
 
             <button type="submit" className={styles.signInBtn} disabled={loading}>
-              <UserPlus size={18} />
+              {loading ? (
+                <Loader2 size={18} className={styles.spinIcon} />
+              ) : (
+                <UserPlus size={18} />
+              )}
               <span>{loading ? "Creating Account..." : "Create Account"}</span>
             </button>
           </form>
@@ -200,7 +205,11 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
             </div>
 
             <button type="submit" className={styles.signInBtn} disabled={loading}>
-              <LogIn size={18} />
+              {loading ? (
+                <Loader2 size={18} className={styles.spinIcon} />
+              ) : (
+                <LogIn size={18} />
+              )}
               <span>{loading ? "Signing In..." : "Sign In"}</span>
             </button>
           </form>
@@ -216,9 +225,14 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
           onClick={handleGuestBypass}
           disabled={loading}
         >
-          <ShieldAlert size={18} />
+          {loading ? (
+            <Loader2 size={18} className={styles.spinIcon} />
+          ) : (
+            <ShieldAlert size={18} />
+          )}
           <span>Guest Sign-In (Instant Bypass)</span>
         </button>
+
 
         <p className={styles.footerText}>
           {isRegisterMode ? "Already have an account?" : "Don't have an account?"}

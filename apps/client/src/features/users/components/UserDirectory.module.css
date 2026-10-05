@@ -231,7 +231,9 @@
 
 .metaRow strong {
   color: var(--text-main);
+  font-weight: 800;
 }
+
 
 /* Follow Button */
 .actionCol {

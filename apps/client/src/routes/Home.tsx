@@ -6,8 +6,10 @@ import { CreatePost } from "../features/posts/components/CreatePost";
 import { ProfileView } from "../features/users/components/ProfileView";
 import { UserDirectory } from "../features/users/components/UserDirectory";
 import { MainLayout } from "../layouts/MainLayout";
+import { Spinner } from "../components/common/Spinner";
 import { Globe, Users, Clock, Flame, History } from "lucide-react";
 import styles from "./Home.module.css";
+
 
 interface HomeProps {
   currentUser: CurrentUser | string | null;
@@ -151,7 +153,7 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
           />
 
           {loading ? (
-            <div className={styles.statusContainer}>Loading posts...</div>
+            <Spinner size={32} />
           ) : posts.length === 0 ? (
             <div className={styles.statusContainer}>
               {activeFeed === "following"

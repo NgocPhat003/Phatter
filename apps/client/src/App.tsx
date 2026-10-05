@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { api } from "./lib/api";
 import { Login } from "./routes/Login";
 import { Home } from "./routes/Home";
+import { Spinner } from "./components/common/Spinner";
 import type { CurrentUser } from "./features/posts/types/types";
 
 function App() {
@@ -42,11 +43,9 @@ function App() {
           alignItems: "center",
           justifyContent: "center",
           backgroundColor: "#f7f9fa",
-          color: "#9ca3af",
-          fontFamily: "sans-serif",
         }}
       >
-        Connecting...
+        <Spinner size={36} />
       </div>
     );
   }

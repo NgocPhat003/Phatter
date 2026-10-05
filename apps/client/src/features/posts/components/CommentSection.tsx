@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { api } from "../../../lib/api";
 import type { Comment } from "../types/types";
+import { Spinner } from "../../../components/common/Spinner";
 import styles from "./CommentSection.module.css";
+
 
 interface CommentSectionProps {
   postId: string;
@@ -147,7 +149,7 @@ export const CommentSection = ({
 
       {/* Comments List */}
       {loading ? (
-        <div className={styles.loadingState}>Loading replies...</div>
+        <Spinner size={24} />
       ) : comments.length === 0 ? (
         <div className={styles.emptyState}>No replies yet — be the first!</div>
       ) : (

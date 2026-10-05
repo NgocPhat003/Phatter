@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { api } from "../../../lib/api";
-import { Image as ImageIcon, Send, X } from "lucide-react";
+import { Image as ImageIcon, Send, X, Loader2 } from "lucide-react";
 import styles from "./CreatePost.module.css";
+
 
 interface CreatePostProps {
   currentUser: string | null;
@@ -112,9 +113,14 @@ export const CreatePost = ({
           disabled={loading || !content.trim()}
           className={styles.publishBtn}
         >
-          <Send size={15} />
+          {loading ? (
+            <Loader2 size={15} className={styles.spinIcon} />
+          ) : (
+            <Send size={15} />
+          )}
           <span>{loading ? "Publishing..." : "Publish"}</span>
         </button>
+
       </div>
 
       {error && <p className={styles.errorMessage}>{error}</p>}

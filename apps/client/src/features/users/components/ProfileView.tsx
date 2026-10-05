@@ -3,8 +3,11 @@ import { api } from "../../../lib/api";
 import type { Post, UserProfile } from "../../posts/types/types";
 import { PostCard } from "../../posts/components/PostCard";
 import { EditProfileModal } from "./EditProfileModal";
+import { FollowListModal } from "./FollowListModal";
+import { Spinner } from "../../../components/common/Spinner";
 import { ArrowLeft, Calendar } from "lucide-react";
 import styles from "./ProfileView.module.css";
+
 
 interface ProfileViewProps {
   username: string;
@@ -30,6 +33,7 @@ export const ProfileView = ({
   const [loading, setLoading] = useState(true);
   const [followLoading, setFollowLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [followModalTab, setFollowModalTab] = useState<"following" | "followers" | null>(null);
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -106,7 +110,7 @@ export const ProfileView = ({
   if (loading) {
     return (
       <div className={styles.container}>
-        <div className={styles.statusMessage}>Loading profile...</div>
+        <Spinner size={32} />
       </div>
     );
   }
@@ -194,15 +198,26 @@ export const ProfileView = ({
         </div>
 
         <div className={styles.statsRow}>
-          <div className={styles.statItem}>
-            <span className={styles.statNumber}>{profile.followingCount}</span>
+          <button
+            type="button"
+            className={styles.statItem}
+            onClick={() => setFollowModalTab("following")}
+            title="View following"
+          >
+            <strong className={styles.statNumber}>{profile.followingCount}</strong>
             <span className={styles.statLabel}>Following</span>
-          </div>
-          <div className={styles.statItem}>
-            <span className={styles.statNumber}>{profile.followersCount}</span>
+          </button>
+          <button
+            type="button"
+            className={styles.statItem}
+            onClick={() => setFollowModalTab("followers")}
+            title="View followers"
+          >
+            <strong className={styles.statNumber}>{profile.followersCount}</strong>
             <span className={styles.statLabel}>Followers</span>
-          </div>
+          </button>
         </div>
+
       </div>
 
       {/* User Posts Timeline */}
@@ -224,6 +239,22 @@ export const ProfileView = ({
           ))
         )}
       </div>
+
+      {/* Followers & Following Modal */}
+      {followModalTab && (
+        <FollowListModal
+          username={profile.username}
+          initialTab={followModalTab}
+          currentUser={currentUser}
+          onClose={() => setFollowModalTab(null)}
+          onOpenProfile={(u) => {
+            setFollowModalTab(null);
+            onOpenProfile?.(u);
+          }}
+          onRequireLogin={onRequireLogin}
+          onFollowCountChanged={fetchProfile}
+        />
+      )}
 
       {/* Edit Profile Modal */}
       {isEditing && (

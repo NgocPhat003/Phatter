@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { api } from "../../../lib/api";
 import type { DirectoryUser } from "../../posts/types/types";
 import { Search, UserPlus, UserCheck, ArrowLeft, Users, Sparkles } from "lucide-react";
+import { Spinner } from "../../../components/common/Spinner";
 import styles from "./UserDirectory.module.css";
+
 
 interface UserDirectoryProps {
   currentUser: string | null;
@@ -20,7 +22,7 @@ export const UserDirectory = ({
   const [users, setUsers] = useState<DirectoryUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState<"suggestions" | "all">("suggestions");
+  const [activeTab, setActiveTab] = useState<"suggestions" | "following" | "all">("suggestions");
   const [followActionLoading, setFollowActionLoading] = useState<Record<string, boolean>>({});
 
   const fetchUsers = useCallback(async () => {
@@ -29,7 +31,7 @@ export const UserDirectory = ({
       const res = await api.get("/users", {
         params: {
           search: searchTerm.trim() || undefined,
-          filter: activeTab === "suggestions" ? "suggestions" : undefined,
+          filter: activeTab === "all" ? undefined : activeTab,
         },
       });
       setUsers(res.data.users || []);
@@ -39,6 +41,7 @@ export const UserDirectory = ({
       setLoading(false);
     }
   }, [searchTerm, activeTab]);
+
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -146,6 +149,18 @@ export const UserDirectory = ({
             <Sparkles size={16} />
             <span>Who to Follow</span>
           </button>
+          {currentUser && (
+            <button
+              type="button"
+              className={`${styles.tabBtn} ${
+                activeTab === "following" ? styles.activeTabBtn : ""
+              }`}
+              onClick={() => setActiveTab("following")}
+            >
+              <UserCheck size={16} />
+              <span>Following</span>
+            </button>
+          )}
           <button
             type="button"
             className={`${styles.tabBtn} ${
@@ -162,7 +177,7 @@ export const UserDirectory = ({
       {/* User Cards Grid / List */}
       <div className={styles.usersList}>
         {loading ? (
-          <div className={styles.statusBox}>Discovering accounts...</div>
+          <Spinner size={32} />
         ) : users.length === 0 ? (
           <div className={styles.emptyBox}>
             <p className={styles.emptyTitle}>
@@ -170,6 +185,8 @@ export const UserDirectory = ({
                 ? `No accounts found matching "${searchTerm}"`
                 : activeTab === "suggestions"
                 ? "You're following everyone on this list!"
+                : activeTab === "following"
+                ? "You are not following anyone yet."
                 : "No users registered yet."}
             </p>
             {activeTab === "suggestions" && (
@@ -179,6 +196,15 @@ export const UserDirectory = ({
                 onClick={() => setActiveTab("all")}
               >
                 Browse All Members
+              </button>
+            )}
+            {activeTab === "following" && (
+              <button
+                type="button"
+                className={styles.viewAllBtn}
+                onClick={() => setActiveTab("suggestions")}
+              >
+                Discover People to Follow
               </button>
             )}
           </div>

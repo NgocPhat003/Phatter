@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { api } from "../../../lib/api";
-import { X, Camera } from "lucide-react";
+import { X, Camera, Loader2 } from "lucide-react";
 import styles from "./EditProfileModal.module.css";
+
 
 interface EditProfileModalProps {
   initialBio: string | null;
@@ -129,9 +130,16 @@ export const EditProfileModal = ({
             >
               Cancel
             </button>
-            <button type="submit" className={styles.saveBtn} disabled={saving}>
-              {saving ? "Saving..." : "Save"}
+            <button
+              type="submit"
+              className={styles.saveBtn}
+              disabled={saving}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+            >
+              {saving && <Loader2 size={15} className={styles.spinIcon} />}
+              <span>{saving ? "Saving..." : "Save"}</span>
             </button>
+
           </footer>
         </form>
       </div>
