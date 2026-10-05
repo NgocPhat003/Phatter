@@ -2,7 +2,7 @@ import { Router } from "express";
 import { getComments, createComment } from "./comments.controller.js";
 import { requireAuth, optionalAuth } from "../../shared/middleware/auth.middleware.js";
 
-const router = Router();
+const router: Router = Router();
 
 // GET /api/comments/:postId
 router.get("/:postId", optionalAuth, getComments);

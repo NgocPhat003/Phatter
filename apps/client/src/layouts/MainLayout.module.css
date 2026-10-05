@@ -1,19 +1,20 @@
 .layoutContainer {
   display: flex;
-  flex-direction: row; /* Keep sidebar and feed side-by-side at all times */
+  flex-direction: row;
   min-height: 100vh;
   background-color: #f7f9fa;
   width: 100%;
+  box-sizing: border-box;
 }
 
-/* Left Sidebar - Full Desktop */
+/* Left Sidebar - Anchored directly to the left edge of the screen */
 .sidebar {
   width: 250px;
-  flex-shrink: 0; /* Prevents the sidebar from collapsing when window shrinks */
+  flex-shrink: 0;
   background-color: #ffffff;
   border-right: 1px solid #edf2f7;
   display: flex;
-  flex-direction: column; /* Keep icons stacked vertically */
+  flex-direction: column;
   justify-content: space-between;
   padding: 24px 16px;
   position: sticky;
@@ -68,6 +69,43 @@
   background-color: #ecfdf5;
   color: #059669;
   font-weight: 600;
+}
+
+.navIconWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.unreadBadge {
+  position: absolute;
+  top: -6px;
+  right: -9px;
+  background-color: #10b981;
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  line-height: 1;
+  animation: badgePop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes badgePop {
+  0% {
+    transform: scale(0);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Sidebar Bottom (Dark Mode, Log Out, User Info) */
@@ -138,17 +176,29 @@
   white-space: nowrap;
 }
 
-/* Feed Column */
-.mainFeedArea {
+/* Content Wrapper: Fills the remaining screen and centers the feed */
+.contentWrapper {
   flex: 1;
-  min-width: 0; /* Prevents overflow issues when viewport is small */
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+  background-color: #f7f9fa;
+}
+
+/* Feed Column: Centered exactly in the middle of the available space */
+.mainFeedArea {
+  width: 100%;
   max-width: 680px;
-  margin: 0 auto;
   padding: 24px 16px;
+  box-sizing: border-box;
+}
+
+.messagesArea {
+  max-width: 860px;
 }
 
 /* =========================================================
-   Small / Narrow Windows: Lock to Left Icon Rail (like X)
+   Narrow Windows: Lock to Left Icon Rail (like X)
    ========================================================= */
 @media (max-width: 1080px) {
   .sidebar {
@@ -202,5 +252,12 @@
     padding: 0;
     background: transparent;
     justify-content: center;
+  }
+}
+
+/* Mobile (< 640px) */
+@media (max-width: 640px) {
+  .mainFeedArea {
+    padding: 16px 8px;
   }
 }

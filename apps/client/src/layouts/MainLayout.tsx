@@ -15,12 +15,14 @@ interface MainLayoutProps {
   children: ReactNode;
   currentUser: string | null;
   currentUserAvatar?: string | null;
-  activeView?: "timeline" | "directory" | "profile" | "hashtags";
+  activeView?: "timeline" | "directory" | "profile" | "hashtags" | "messages";
   onLogout: () => void;
   onOpenProfile?: (username: string) => void;
   onGoHome?: () => void;
   onOpenDirectory?: () => void;
   onOpenHashtags?: () => void;
+  onOpenMessages?: () => void;
+  unreadMessagesCount?: number;
 }
 
 export const MainLayout = ({
@@ -28,11 +30,13 @@ export const MainLayout = ({
   currentUser,
   currentUserAvatar,
   activeView = "timeline",
+  unreadMessagesCount = 0,
   onLogout,
   onOpenProfile,
   onGoHome,
   onOpenDirectory,
   onOpenHashtags,
+  onOpenMessages,
 }: MainLayoutProps) => {
   return (
     <div className={styles.layoutContainer}>
@@ -70,8 +74,21 @@ export const MainLayout = ({
               <span className={styles.navLabel}>Hashtags</span>
             </button>
 
-            <button className={styles.navItem} title="Messages">
-              <MessageSquare size={20} />
+            <button
+              className={`${styles.navItem} ${
+                activeView === "messages" ? styles.activeNavItem : ""
+              }`}
+              title="Messages"
+              onClick={onOpenMessages}
+            >
+              <div className={styles.navIconWrapper}>
+                <MessageSquare size={20} />
+                {unreadMessagesCount > 0 && (
+                  <span className={styles.unreadBadge}>
+                    {unreadMessagesCount > 99 ? "99+" : unreadMessagesCount}
+                  </span>
+                )}
+              </div>
               <span className={styles.navLabel}>Messages</span>
             </button>
             <button
@@ -83,6 +100,7 @@ export const MainLayout = ({
             >
               <Users size={20} />
               <span className={styles.navLabel}>Directory</span>
+
             </button>
             <button className={styles.navItem} title="Settings">
               <Settings size={20} />
@@ -130,7 +148,15 @@ export const MainLayout = ({
         </div>
       </aside>
 
-      <main className={styles.mainFeedArea}>{children}</main>
+      <div className={styles.contentWrapper}>
+        <main
+          className={`${styles.mainFeedArea} ${
+            activeView === "messages" ? styles.messagesArea : ""
+          }`}
+        >
+          {children}
+        </main>
+      </div>
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import { Temporal } from "@js-temporal/polyfill";
 (globalThis as any).Temporal = Temporal;
+import http from "http";
 import express  from "express";  
 import dotenv from "dotenv";
 import cors from "cors";
@@ -11,11 +12,20 @@ import likesRoutes from "./modules/likes/likes.routes.js";
 import commentsRoutes from "./modules/comments/comments.routes.js";
 import uploadsRoutes from "./modules/uploads/uploads.routes.js";
 import usersRoutes from "./modules/users/users.routes.js";
+import messagesRoutes from "./modules/messages/messages.routes.js";
+import { setupSocketServer } from "./modules/messages/messages.socket.js";
+import { initMessagesTable } from "./modules/messages/messages.db.js";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Create HTTP server for both Express and Socket.io
+const httpServer = http.createServer(app);
+
+// Setup Socket.io real-time engine
+setupSocketServer(httpServer);
 
 // Core middleware
 app.use(cors({
@@ -32,7 +42,7 @@ app.use("/api/likes", likesRoutes);
 app.use("/api/comments", commentsRoutes);
 app.use("/api/uploads", uploadsRoutes);
 app.use("/api/users", usersRoutes);
-
+app.use("/api/messages", messagesRoutes);
 
 // Database Health Check Route
 app.get("/api/health", async (_req, res) => {
@@ -58,6 +68,7 @@ app.get("/api/health", async (_req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`[Server]: Phatter API running on ${PORT}`);
+httpServer.listen(PORT, async () => {
+    console.log(`[Server]: Phatter API and Socket.io running on ${PORT}`);
+    await initMessagesTable();
 });

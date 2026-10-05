@@ -10,6 +10,9 @@ export interface Comment {
   content: string;
   createdAt: string;
   author: Author | null;
+  parentId?: string | null;
+  replyToUsername?: string | null;
+  replies?: Comment[];
 }
 
 export interface Post {
@@ -59,4 +62,31 @@ export interface CurrentUser {
   profilePictureUrl?: string | null;
   bio?: string | null;
   isGuestSandbox?: boolean;
+}
+
+export interface DirectMessage {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  content: string;
+  createdAt: string;
+  isRead: boolean;
+  isSelf?: boolean;
+}
+
+export interface Conversation {
+  partner: {
+    id: string;
+    username: string;
+    profilePictureUrl: string | null;
+    isGuestSandbox: boolean;
+  };
+  lastMessage: {
+    id: string;
+    content: string;
+    createdAt: string;
+    senderId: string;
+    isSelf: boolean;
+  };
+  unreadCount: number;
 }

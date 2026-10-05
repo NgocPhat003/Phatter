@@ -1,8 +1,10 @@
 import type { Request, Response } from "express";
 import { db } from "phatter-db";
 import crypto from "crypto";
+import bcrypt from "bcryptjs";
 import { signAuthToken } from "../../shared/utils/jwt.util.js";
 import { jwtConfig } from "../../shared/config/jwt.config.js";
+import { pool } from "../../shared/db/pg.js";
 
 // Helper: Ensure a unique username for social logins
 const getUniqueUsername = async (desiredName: string): Promise<string> => {
@@ -20,37 +22,54 @@ const getUniqueUsername = async (desiredName: string): Promise<string> => {
 };
 
 // ----------------------------------------------------
-// Standard Login & Register
+// Standard Login & Register with Password Security
 // ----------------------------------------------------
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { username, email, bio } = req.body;
+    const { username, email, password, bio } = req.body;
 
     if (!username || !email) {
       return res.status(400).json({ error: "Username and email are required" });
+    }
+
+    if (!password || typeof password !== "string" || password.length < 6) {
+      return res
+        .status(400)
+        .json({ error: "Password must be at least 6 characters long" });
     }
 
     const cleanUsername = username.trim();
     const cleanEmail = email.trim().toLowerCase();
 
     // Check if username or email already taken
-    const existingUsername = await db.orm.public.User?.where({ username: cleanUsername }).first();
-    if (existingUsername) {
-      return res.status(400).json({ error: "Username is already taken" });
-    }
+    const existingCheck = await pool.query(
+      'SELECT id, username, email FROM "user" WHERE LOWER(username) = LOWER($1) OR LOWER(email) = LOWER($2)',
+      [cleanUsername, cleanEmail]
+    );
 
-    const existingEmail = await db.orm.public.User?.where({ email: cleanEmail }).first();
-    if (existingEmail) {
+    if (existingCheck.rows.length > 0) {
+      const match = existingCheck.rows[0];
+      if (match.username.toLowerCase() === cleanUsername.toLowerCase()) {
+        return res.status(400).json({ error: "Username is already taken" });
+      }
       return res.status(400).json({ error: "Email is already registered" });
     }
 
-    const newUser = await db.orm.public.User.create({
-      username: cleanUsername,
-      email: cleanEmail,
-      bio: bio ? bio.trim() : null,
-      isGuestSandbox: false,
-    });
+    // Securely hash password with bcrypt
+    const passwordHash = await bcrypt.hash(password, 10);
+    const userId = `usr_${crypto.randomBytes(10).toString("hex")}`;
+
+    const insertRes = await pool.query(
+      `
+      INSERT INTO "user" (id, username, email, "passwordHash", bio, "isGuestSandbox", "createdAt")
+      VALUES ($1, $2, $3, $4, $5, FALSE, NOW())
+      RETURNING id, username, email, bio, "profilePictureUrl", "isGuestSandbox"
+      `,
+      [userId, cleanUsername, cleanEmail, passwordHash, bio ? bio.trim() : null]
+    );
+
+    const newUser = insertRes.rows[0];
 
     const token = signAuthToken({
       userId: newUser.id,
@@ -78,22 +97,48 @@ export const register = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const { identifier } = req.body;
+    const { identifier, password } = req.body;
 
-    if (!identifier) {
-      return res.status(400).json({ error: "Username or email is required" });
+    if (!identifier || !password) {
+      return res
+        .status(400)
+        .json({ error: "Username/email and password are required" });
     }
 
     const clean = identifier.trim();
 
-    // Search by username or by email
-    let user = await db.orm.public.User?.where({ username: clean }).first();
-    if (!user) {
-      user = await db.orm.public.User?.where({ email: clean.toLowerCase() }).first();
+    // Query user by username or email
+    const queryRes = await pool.query(
+      `
+      SELECT id, username, email, "passwordHash", bio, "profilePictureUrl", "isGuestSandbox"
+      FROM "user"
+      WHERE LOWER(username) = LOWER($1) OR LOWER(email) = LOWER($1)
+      LIMIT 1
+      `,
+      [clean]
+    );
+
+    if (queryRes.rows.length === 0) {
+      return res.status(401).json({ error: "Invalid username/email or password" });
     }
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found with this username or email" });
+    const user = queryRes.rows[0];
+
+    // If account has passwordHash, verify with bcrypt
+    if (user.passwordHash) {
+      const isMatch = await bcrypt.compare(password, user.passwordHash);
+      if (!isMatch) {
+        return res
+          .status(401)
+          .json({ error: "Invalid username/email or password" });
+      }
+    } else {
+      // Legacy user without a password: set their password now
+      const newHash = await bcrypt.hash(password, 10);
+      await pool.query('UPDATE "user" SET "passwordHash" = $1 WHERE id = $2', [
+        newHash,
+        user.id,
+      ]);
     }
 
     const token = signAuthToken({

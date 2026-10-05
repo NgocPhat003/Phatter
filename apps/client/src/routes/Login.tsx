@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { LogIn, UserPlus, ShieldAlert, Loader2 } from "lucide-react";
+import { LogIn, UserPlus, ShieldAlert, Loader2, Eye, EyeOff } from "lucide-react";
 import { api } from "../lib/api";
 
 import styles from "./Login.module.css";
@@ -11,8 +11,11 @@ interface LoginProps {
 export const Login = ({ onLoginSuccess }: LoginProps) => {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [registerUsername, setRegisterUsername] = useState("");
   const [registerEmail, setRegisterEmail] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,7 +25,6 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
     const authError = params.get("auth_error");
     if (authError) {
       setError(authError);
-      // Clean query params from URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
@@ -33,6 +35,10 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
       setError("Please enter your username or email.");
       return;
     }
+    if (!password) {
+      setError("Please enter your password.");
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -40,10 +46,14 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
     try {
       const res = await api.post("/auth/login", {
         identifier: identifier.trim(),
+        password,
       });
       onLoginSuccess(res.data.user.username);
     } catch (err: any) {
-      setError(err.response?.data?.error || "Account not found. Please register or check your details.");
+      setError(
+        err.response?.data?.error ||
+          "Invalid username/email or password. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -56,6 +66,11 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
       return;
     }
 
+    if (!registerPassword || registerPassword.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -63,17 +78,20 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
       const res = await api.post("/auth/register", {
         username: registerUsername.trim(),
         email: registerEmail.trim(),
+        password: registerPassword,
       });
       onLoginSuccess(res.data.user.username);
     } catch (err: any) {
-      setError(err.response?.data?.error || "Registration failed. Username or email may already be in use.");
+      setError(
+        err.response?.data?.error ||
+          "Registration failed. Username or email may already be in use."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleSocialLogin = (provider: "github" | "google") => {
-    // Direct browser navigation to start the OAuth handshake
     window.location.href = `http://localhost:3000/api/auth/${provider}`;
   };
 
@@ -180,6 +198,29 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
               />
             </div>
 
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>Password</label>
+              <div className={styles.passwordWrapper}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className={`${styles.input} ${styles.passwordInput}`}
+                  value={registerPassword}
+                  onChange={(e) => setRegisterPassword(e.target.value)}
+                  disabled={loading}
+                  placeholder="At least 6 characters"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className={styles.eyeToggleBtn}
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
             <button type="submit" className={styles.signInBtn} disabled={loading}>
               {loading ? (
                 <Loader2 size={18} className={styles.spinIcon} />
@@ -202,6 +243,29 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
                 placeholder="Enter your username or email"
                 autoComplete="username"
               />
+            </div>
+
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>Password</label>
+              <div className={styles.passwordWrapper}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className={`${styles.input} ${styles.passwordInput}`}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                  placeholder="Enter your password"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  className={styles.eyeToggleBtn}
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             <button type="submit" className={styles.signInBtn} disabled={loading}>
@@ -230,9 +294,8 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
           ) : (
             <ShieldAlert size={18} />
           )}
-          <span>Guest Sign-In (Instant Bypass)</span>
+          <span>Guest Sign-In (Instant Sandbox)</span>
         </button>
-
 
         <p className={styles.footerText}>
           {isRegisterMode ? "Already have an account?" : "Don't have an account?"}
@@ -242,6 +305,8 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
             onClick={() => {
               setIsRegisterMode(!isRegisterMode);
               setError(null);
+              setPassword("");
+              setRegisterPassword("");
             }}
           >
             {isRegisterMode ? "Sign In" : "Register"}

@@ -6,8 +6,10 @@ import { CreatePost } from "../features/posts/components/CreatePost";
 import { ProfileView } from "../features/users/components/ProfileView";
 import { UserDirectory } from "../features/users/components/UserDirectory";
 import { HashtagsExplore } from "../features/hashtags/components/HashtagsExplore";
+import { MessagesView } from "../features/messages/components/MessagesView";
 import { MainLayout } from "../layouts/MainLayout";
 import { Spinner } from "../components/common/Spinner";
+import { connectSocket } from "../lib/socket";
 import { Globe, Users, Clock, Flame, History } from "lucide-react";
 import styles from "./Home.module.css";
 
@@ -25,16 +27,53 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
     typeof currentUser === "object" ? currentUser?.profilePictureUrl : null;
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentView, setCurrentView] = useState<"timeline" | "directory" | "hashtags">("timeline");
+  const [currentView, setCurrentView] = useState<"timeline" | "directory" | "hashtags" | "messages">("timeline");
   const [selectedHashtag, setSelectedHashtag] = useState<string | null>(null);
+  const [messagingPartner, setMessagingPartner] = useState<any | null>(null);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState<number>(0);
   const [activeFeed, setActiveFeed] = useState<"for-you" | "following">("for-you");
   const [activeSort, setActiveSort] = useState<"latest" | "popular" | "oldest">("latest");
   const [viewingProfile, setViewingProfile] = useState<string | null>(null);
+
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const res = await api.get("/messages/unread-count");
+      setUnreadMessagesCount(res.data?.unreadCount || 0);
+    } catch (err) {
+      console.error("Failed to load unread messages count:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUnreadCount();
+  }, [fetchUnreadCount]);
+
+  useEffect(() => {
+    const socket = connectSocket();
+
+    const handleUpdate = () => {
+      fetchUnreadCount();
+    };
+
+    socket.on("new_message", handleUpdate);
+    socket.on("messages_read", handleUpdate);
+
+    return () => {
+      socket.off("new_message", handleUpdate);
+      socket.off("messages_read", handleUpdate);
+    };
+  }, [fetchUnreadCount]);
 
   const handleSelectHashtag = (tag: string) => {
     setViewingProfile(null);
     setSelectedHashtag(tag);
     setCurrentView("hashtags");
+  };
+
+  const handleStartChat = (partner: any) => {
+    setViewingProfile(null);
+    setMessagingPartner(partner);
+    setCurrentView("messages");
   };
 
   const fetchFeed = useCallback(async () => {
@@ -82,6 +121,11 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
         setSelectedHashtag(null);
         setCurrentView("hashtags");
       }}
+      onOpenMessages={() => {
+        setViewingProfile(null);
+        setCurrentView("messages");
+      }}
+      unreadMessagesCount={unreadMessagesCount}
     >
       {viewingProfile ? (
         <ProfileView
@@ -92,6 +136,7 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
           onRequireLogin={() => {}}
           onOpenProfile={(u) => setViewingProfile(u)}
           onSelectHashtag={handleSelectHashtag}
+          onStartChat={handleStartChat}
           onProfileUpdated={() => {
             onProfileUpdated?.();
             fetchFeed();
@@ -116,7 +161,17 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
           onOpenProfile={(u) => setViewingProfile(u)}
           onRequireLogin={() => {}}
         />
+      ) : currentView === "messages" ? (
+        <MessagesView
+          currentUser={currentUser}
+          currentUserAvatar={currentUserAvatar}
+          initialPartner={messagingPartner}
+          onOpenProfile={(u) => setViewingProfile(u)}
+          onRequireLogin={() => {}}
+          onRefreshUnreadCount={fetchUnreadCount}
+        />
       ) : (
+
 
         <>
           <header className={styles.feedHeader}>

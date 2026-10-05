@@ -1,40 +1,75 @@
 import type { Request, Response } from "express";
-import { db } from "phatter-db";
+import crypto from "crypto";
+import { pool } from "../../shared/db/pg.js";
 
+/**
+ * GET /api/comments/:postId
+ * Fetches all comments for a post, enriched with authors and structured into thread chains.
+ */
 export const getComments = async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;
 
-    const comments = await db.orm.public.Comment.where({ postId }).all();
-    comments.sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)));
+    const query = `
+      SELECT 
+        c.id, 
+        c.content, 
+        c."createdAt", 
+        c."authorId", 
+        c."parentId",
+        u.id as "author_id", 
+        u.username as "author_username", 
+        u."profilePictureUrl" as "author_avatar", 
+        u."isGuestSandbox" as "author_guest",
+        pu.username as "replyToUsername"
+      FROM "comment" c
+      LEFT JOIN "user" u ON c."authorId" = u.id
+      LEFT JOIN "comment" pc ON c."parentId" = pc.id
+      LEFT JOIN "user" pu ON pc."authorId" = pu.id
+      WHERE c."postId" = $1
+      ORDER BY c."createdAt" ASC;
+    `;
 
-    const enrichedComments = await Promise.all(
-      comments.map(async (comment: any) => {
-        const authorId = comment.authorId || comment.userId;
-        const author = authorId
-          ? await db.orm.public.User.where({ id: authorId }).first()
-          : null;
+    const result = await pool.query(query, [postId]);
 
-        return {
-          id: comment.id,
-          content: comment.content,
-          createdAt: comment.createdAt,
-          author: author
-            ? {
-                id: author.id,
-                username: author.username,
-                profilePictureUrl: author.profilePictureUrl,
-                isGuestSandbox: author.isGuestSandbox,
-              }
-            : null,
-        };
-      })
-    );
+    const rawComments = result.rows.map((row) => ({
+      id: row.id,
+      content: row.content,
+      createdAt: row.createdAt,
+      parentId: row.parentId || null,
+      replyToUsername: row.replyToUsername || null,
+      author: row.author_id
+        ? {
+            id: row.author_id,
+            username: row.author_username,
+            profilePictureUrl: row.author_avatar,
+            isGuestSandbox: Boolean(row.author_guest),
+          }
+        : null,
+    }));
+
+    // Build comment chain trees
+    const commentMap = new Map<string, any>();
+    rawComments.forEach((c) => {
+      commentMap.set(c.id, { ...c, replies: [] });
+    });
+
+    const rootComments: any[] = [];
+
+    rawComments.forEach((c) => {
+      const current = commentMap.get(c.id);
+      if (c.parentId && commentMap.has(c.parentId)) {
+        commentMap.get(c.parentId).replies.push(current);
+      } else {
+        rootComments.push(current);
+      }
+    });
 
     res.json({
       status: "success",
-      count: enrichedComments.length,
-      comments: enrichedComments,
+      count: rawComments.length,
+      comments: rootComments,
+      flatComments: rawComments,
     });
   } catch (error) {
     console.error("Get Comments Error:", error);
@@ -42,10 +77,14 @@ export const getComments = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * POST /api/comments/:postId
+ * Creates a top-level comment or a threaded reply to an existing comment.
+ */
 export const createComment = async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;
-    const { content } = req.body;
+    const { content, parentId } = req.body;
     const currentUserId =
       (req as any).user?.userId ||
       (req as any).user?.id ||
@@ -59,28 +98,67 @@ export const createComment = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Comment content cannot be empty" });
     }
 
-    const newComment = await db.orm.public.Comment.create({
-      content: content.trim(),
-      postId,
-      authorId: currentUserId,
-    });
+    let replyToUsername: string | null = null;
+    let validParentId: string | null = null;
 
-    const author = await db.orm.public.User.where({ id: currentUserId }).first();
+    if (parentId && typeof parentId === "string") {
+      const parentCheck = await pool.query(
+        `
+        SELECT c.id, c."postId", u.username
+        FROM "comment" c
+        LEFT JOIN "user" u ON c."authorId" = u.id
+        WHERE c.id = $1
+        `,
+        [parentId]
+      );
+
+      if (parentCheck.rows.length > 0) {
+        validParentId = parentCheck.rows[0].id;
+        replyToUsername = parentCheck.rows[0].username || null;
+      }
+    }
+
+    const commentId = `cmt_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
+    const insertQuery = `
+      INSERT INTO "comment" (id, content, "postId", "authorId", "parentId", "createdAt")
+      VALUES ($1, $2, $3, $4, $5, NOW())
+      RETURNING id, content, "postId", "authorId", "parentId", "createdAt";
+    `;
+
+    const insertRes = await pool.query(insertQuery, [
+      commentId,
+      content.trim(),
+      postId,
+      currentUserId,
+      validParentId,
+    ]);
+
+    const row = insertRes.rows[0];
+
+    const authorRes = await pool.query(
+      'SELECT id, username, "profilePictureUrl", "isGuestSandbox" FROM "user" WHERE id = $1',
+      [currentUserId]
+    );
+
+    const author = authorRes.rows[0]
+      ? {
+          id: authorRes.rows[0].id,
+          username: authorRes.rows[0].username,
+          profilePictureUrl: authorRes.rows[0].profilePictureUrl,
+          isGuestSandbox: Boolean(authorRes.rows[0].isGuestSandbox),
+        }
+      : null;
 
     res.status(201).json({
       status: "success",
       comment: {
-        id: newComment.id,
-        content: newComment.content,
-        createdAt: newComment.createdAt || new Date().toISOString(),
-        author: author
-          ? {
-              id: author.id,
-              username: author.username,
-              profilePictureUrl: author.profilePictureUrl,
-              isGuestSandbox: author.isGuestSandbox,
-            }
-          : null,
+        id: row.id,
+        content: row.content,
+        createdAt: row.createdAt,
+        parentId: row.parentId,
+        replyToUsername,
+        replies: [],
+        author,
       },
     });
   } catch (error) {

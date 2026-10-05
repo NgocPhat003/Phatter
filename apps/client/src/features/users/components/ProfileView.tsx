@@ -5,7 +5,7 @@ import { PostCard } from "../../posts/components/PostCard";
 import { EditProfileModal } from "./EditProfileModal";
 import { FollowListModal } from "./FollowListModal";
 import { Spinner } from "../../../components/common/Spinner";
-import { ArrowLeft, Calendar } from "lucide-react";
+import { ArrowLeft, Calendar, MessageSquare } from "lucide-react";
 import styles from "./ProfileView.module.css";
 
 
@@ -18,6 +18,7 @@ interface ProfileViewProps {
   onOpenProfile?: (username: string) => void;
   onProfileUpdated?: () => void;
   onSelectHashtag?: (tag: string) => void;
+  onStartChat?: (partner: any) => void;
 }
 
 export const ProfileView = ({
@@ -29,7 +30,9 @@ export const ProfileView = ({
   onOpenProfile,
   onProfileUpdated,
   onSelectHashtag,
+  onStartChat,
 }: ProfileViewProps) => {
+
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -172,17 +175,37 @@ export const ProfileView = ({
                 Edit Profile
               </button>
             ) : (
-              <button
-                type="button"
-                onClick={handleToggleFollow}
-                disabled={followLoading}
-                className={`${styles.actionButton} ${
-                  profile.isFollowing ? styles.followingBtn : styles.followBtn
-                }`}
-              >
-                {profile.isFollowing ? "Following" : "Follow"}
-              </button>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    onStartChat?.({
+                      id: profile.id,
+                      username: profile.username,
+                      profilePictureUrl: profile.profilePictureUrl,
+                      isGuestSandbox: profile.isGuestSandbox,
+                    })
+                  }
+                  className={`${styles.actionButton} ${styles.editProfileBtn}`}
+                  title={`Message @${profile.username}`}
+                >
+                  <MessageSquare size={15} />
+                  <span>Message</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleToggleFollow}
+                  disabled={followLoading}
+                  className={`${styles.actionButton} ${
+                    profile.isFollowing ? styles.followingBtn : styles.followBtn
+                  }`}
+                >
+                  {profile.isFollowing ? "Following" : "Follow"}
+                </button>
+              </div>
             )}
+
           </div>
         </div>
 
