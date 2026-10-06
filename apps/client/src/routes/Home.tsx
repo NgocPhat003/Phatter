@@ -7,9 +7,12 @@ import { ProfileView } from "../features/users/components/ProfileView";
 import { UserDirectory } from "../features/users/components/UserDirectory";
 import { HashtagsExplore } from "../features/hashtags/components/HashtagsExplore";
 import { MessagesView } from "../features/messages/components/MessagesView";
+import { BookmarksView } from "../features/bookmarks/components/BookmarksView";
+import { NotificationsView } from "../features/notifications/components/NotificationsView";
 import { MainLayout } from "../layouts/MainLayout";
 import { Spinner } from "../components/common/Spinner";
 import { connectSocket } from "../lib/socket";
+import { initOnlineUsersTracker } from "../hooks/useOnlineUsers";
 import { Globe, Users, Clock, Flame, History } from "lucide-react";
 import styles from "./Home.module.css";
 
@@ -27,10 +30,11 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
     typeof currentUser === "object" ? currentUser?.profilePictureUrl : null;
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentView, setCurrentView] = useState<"timeline" | "directory" | "hashtags" | "messages">("timeline");
+  const [currentView, setCurrentView] = useState<"timeline" | "directory" | "hashtags" | "messages" | "bookmarks" | "notifications">("timeline");
   const [selectedHashtag, setSelectedHashtag] = useState<string | null>(null);
   const [messagingPartner, setMessagingPartner] = useState<any | null>(null);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState<number>(0);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number>(0);
   const [activeFeed, setActiveFeed] = useState<"for-you" | "following">("for-you");
   const [activeSort, setActiveSort] = useState<"latest" | "popular" | "oldest">("latest");
   const [viewingProfile, setViewingProfile] = useState<string | null>(null);
@@ -44,25 +48,42 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
     }
   }, []);
 
-  useEffect(() => {
-    fetchUnreadCount();
-  }, [fetchUnreadCount]);
+  const fetchUnreadNotificationsCount = useCallback(async () => {
+    try {
+      const res = await api.get("/notifications/unread-count");
+      setUnreadNotificationsCount(res.data?.unreadCount || 0);
+    } catch (err) {
+      console.error("Failed to load unread notifications count:", err);
+    }
+  }, []);
 
   useEffect(() => {
+    fetchUnreadCount();
+    fetchUnreadNotificationsCount();
+  }, [fetchUnreadCount, fetchUnreadNotificationsCount]);
+
+  useEffect(() => {
+    initOnlineUsersTracker();
     const socket = connectSocket();
 
     const handleUpdate = () => {
       fetchUnreadCount();
     };
 
+    const handleNotificationUpdate = () => {
+      fetchUnreadNotificationsCount();
+    };
+
     socket.on("new_message", handleUpdate);
     socket.on("messages_read", handleUpdate);
+    socket.on("new_notification", handleNotificationUpdate);
 
     return () => {
       socket.off("new_message", handleUpdate);
       socket.off("messages_read", handleUpdate);
+      socket.off("new_notification", handleNotificationUpdate);
     };
-  }, [fetchUnreadCount]);
+  }, [fetchUnreadCount, fetchUnreadNotificationsCount]);
 
   const handleSelectHashtag = (tag: string) => {
     setViewingProfile(null);
@@ -125,7 +146,16 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
         setViewingProfile(null);
         setCurrentView("messages");
       }}
+      onOpenBookmarks={() => {
+        setViewingProfile(null);
+        setCurrentView("bookmarks");
+      }}
+      onOpenNotifications={() => {
+        setViewingProfile(null);
+        setCurrentView("notifications");
+      }}
       unreadMessagesCount={unreadMessagesCount}
+      unreadNotificationsCount={unreadNotificationsCount}
     >
       {viewingProfile ? (
         <ProfileView
@@ -141,6 +171,12 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
             onProfileUpdated?.();
             fetchFeed();
           }}
+        />
+      ) : currentView === "notifications" ? (
+        <NotificationsView
+          currentUser={currentUsername}
+          onOpenProfile={(u) => setViewingProfile(u)}
+          onRefreshUnreadCount={fetchUnreadNotificationsCount}
         />
       ) : currentView === "directory" ? (
         <UserDirectory
@@ -169,6 +205,15 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
           onOpenProfile={(u) => setViewingProfile(u)}
           onRequireLogin={() => {}}
           onRefreshUnreadCount={fetchUnreadCount}
+        />
+      ) : currentView === "bookmarks" ? (
+        <BookmarksView
+          currentUser={currentUsername}
+          currentUserAvatar={currentUserAvatar}
+          onOpenProfile={(u) => setViewingProfile(u)}
+          onSelectHashtag={handleSelectHashtag}
+          onBackToTimeline={() => setCurrentView("timeline")}
+          onRequireLogin={() => {}}
         />
       ) : (
 

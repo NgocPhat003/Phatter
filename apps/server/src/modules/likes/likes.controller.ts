@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { db } from "phatter-db";
+import { createNotification } from "../notifications/notifications.db.js";
 
 export const toggleLike = async (req: Request, res: Response) => {
     try {
@@ -27,6 +28,22 @@ export const toggleLike = async (req: Request, res: Response) => {
             postId,
             userId, 
         });
+
+        // Trigger real-time notification to the post author
+        try {
+          const post = await db.orm.public.Post?.where({ id: postId }).first();
+          if (post && post.authorId && String(post.authorId) !== String(userId)) {
+            await createNotification({
+              recipientId: post.authorId,
+              actorId: userId,
+              type: "like",
+              postId: post.id,
+              content: post.content ? post.content.slice(0, 80) : null,
+            });
+          }
+        } catch (notifErr) {
+          console.error("Failed to send like notification:", notifErr);
+        }
 
         res.status(201).json({ status: "success", message: "Post liked" });
     } catch (error) {

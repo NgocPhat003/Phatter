@@ -3,6 +3,7 @@ import { api } from "../../../lib/api";
 import type { DirectoryUser } from "../../posts/types/types";
 import { Search, UserPlus, UserCheck, ArrowLeft, Users, Sparkles } from "lucide-react";
 import { Spinner } from "../../../components/common/Spinner";
+import { useOnlineUsers } from "../../../hooks/useOnlineUsers";
 import styles from "./UserDirectory.module.css";
 
 
@@ -19,6 +20,7 @@ export const UserDirectory = ({
   onBackToTimeline,
   onRequireLogin,
 }: UserDirectoryProps) => {
+  const onlineUserIds = useOnlineUsers();
   const [users, setUsers] = useState<DirectoryUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -215,6 +217,8 @@ export const UserDirectory = ({
             );
             const isActionBusy = Boolean(followActionLoading[u.username]);
 
+            const isOnline = onlineUserIds.has(String(u.id));
+
             return (
               <div
                 key={u.id}
@@ -222,18 +226,21 @@ export const UserDirectory = ({
                 onClick={() => onOpenProfile(u.username)}
               >
                 {/* Left: Avatar */}
-                <div className={styles.avatarWrapper}>
-                  {u.profilePictureUrl ? (
-                    <img
-                      src={u.profilePictureUrl}
-                      alt={u.username}
-                      className={styles.avatarImg}
-                    />
-                  ) : (
-                    <div className={styles.avatarFallback}>
-                      {u.username.slice(0, 1).toUpperCase()}
-                    </div>
-                  )}
+                <div style={{ position: "relative", flexShrink: 0 }}>
+                  <div className={styles.avatarWrapper}>
+                    {u.profilePictureUrl ? (
+                      <img
+                        src={u.profilePictureUrl}
+                        alt={u.username}
+                        className={styles.avatarImg}
+                      />
+                    ) : (
+                      <div className={styles.avatarFallback}>
+                        {u.username.slice(0, 1).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  {isOnline && <span className={styles.onlineBadge} />}
                 </div>
 
                 {/* Center: Info */}
@@ -244,6 +251,7 @@ export const UserDirectory = ({
                       <span className={styles.guestBadge}>GUEST</span>
                     )}
                     {isSelf && <span className={styles.selfBadge}>YOU</span>}
+                    {isOnline && <span className={styles.onlineBadgeSmall}>Online</span>}
                   </div>
 
                   {u.bio ? (

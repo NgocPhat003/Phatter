@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import crypto from "crypto";
 import { pool } from "../../shared/db/pg.js";
+import { createNotification } from "../notifications/notifications.db.js";
 
 /**
  * GET /api/comments/:postId
@@ -148,6 +149,46 @@ export const createComment = async (req: Request, res: Response) => {
           isGuestSandbox: Boolean(authorRes.rows[0].isGuestSandbox),
         }
       : null;
+
+    // Trigger real-time notifications
+    try {
+      let notifiedParentAuthor = false;
+      if (validParentId) {
+        const parentAuthorRes = await pool.query('SELECT "authorId" FROM "comment" WHERE id = $1', [validParentId]);
+        const parentAuthorId = parentAuthorRes.rows[0]?.authorId;
+        if (parentAuthorId && String(parentAuthorId) !== String(currentUserId)) {
+          notifiedParentAuthor = true;
+          await createNotification({
+            recipientId: parentAuthorId,
+            actorId: currentUserId,
+            type: "reply",
+            postId,
+            commentId: row.id,
+            content: content.trim().slice(0, 100),
+          });
+        }
+      }
+
+      // Notify post author if not already notified as parent author
+      const postRes = await pool.query('SELECT "authorId" FROM "post" WHERE id = $1', [postId]);
+      const postAuthorId = postRes.rows[0]?.authorId;
+      if (
+        postAuthorId &&
+        String(postAuthorId) !== String(currentUserId) &&
+        !notifiedParentAuthor
+      ) {
+        await createNotification({
+          recipientId: postAuthorId,
+          actorId: currentUserId,
+          type: "comment",
+          postId,
+          commentId: row.id,
+          content: content.trim().slice(0, 100),
+        });
+      }
+    } catch (notifErr) {
+      console.error("Failed to send comment notification:", notifErr);
+    }
 
     res.status(201).json({
       status: "success",

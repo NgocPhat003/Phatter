@@ -25,6 +25,7 @@ export interface Post {
     likesCount: number;
     commentsCount: number;
     isLiked: boolean;
+    isBookmarked?: boolean;
   };
 }
 
@@ -89,4 +90,23 @@ export interface Conversation {
     isSelf: boolean;
   };
   unreadCount: number;
+}
+
+export interface AppNotification {
+  id: string;
+  recipientId: string;
+  actorId: string;
+  type: "like" | "comment" | "reply" | "follow";
+  postId?: string | null;
+  commentId?: string | null;
+  content?: string | null;
+  postSnippet?: string | null;
+  isRead: boolean;
+  createdAt: string;
+  actor: {
+    id: string;
+    username: string;
+    profilePictureUrl: string | null;
+    isGuestSandbox: boolean;
+  } | null;
 }

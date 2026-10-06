@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { db } from "phatter-db";
+import { getUserBookmarkedPostIds } from "../bookmarks/bookmarks.db.js";
 
 export const createPost = async (req: Request, res: Response) => {
     try {
@@ -66,6 +67,10 @@ export const getPosts = async (req: Request, res: Response) => {
       posts = posts.filter((p: any) => allowedAuthorIds.has(String(p.authorId)));
     }
 
+    const userBookmarks = currentUserId
+      ? await getUserBookmarkedPostIds(currentUserId)
+      : new Set<string>();
+
     const enrichedPosts = await Promise.all(
       posts.map(async (post) => {
         const author = await db.orm.public.User.where({ id: post.authorId }).first();
@@ -73,13 +78,15 @@ export const getPosts = async (req: Request, res: Response) => {
         const comments = await db.orm.public.Comment.where({ postId: post.id }).all();
         
         // Compare using String() to prevent type mismatch issues
-       const isLiked = Boolean(
+        const isLiked = Boolean(
           currentUserId &&
             likes.some((like: any) => {
               const likeOwner = like.userId || like.authorId || like.user_id;
               return String(likeOwner) === String(currentUserId);
             })
         );
+
+        const isBookmarked = userBookmarks.has(String(post.id));
 
         return {
           id: post.id,
@@ -98,6 +105,7 @@ export const getPosts = async (req: Request, res: Response) => {
             likesCount: likes.length,
             commentsCount: comments.length,
             isLiked,
+            isBookmarked,
           },
         };
       })

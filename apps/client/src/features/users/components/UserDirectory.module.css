@@ -330,3 +330,25 @@
   background-color: #ecfdf5;
 }
 
+.onlineBadge {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 13px;
+  height: 13px;
+  background-color: #10b981;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+}
+
+.onlineBadgeSmall {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 9999px;
+  background-color: #ecfdf5;
+  color: #059669;
+  font-weight: 600;
+  margin-left: 6px;
+}
+
+

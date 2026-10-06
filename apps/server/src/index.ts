@@ -13,8 +13,12 @@ import commentsRoutes from "./modules/comments/comments.routes.js";
 import uploadsRoutes from "./modules/uploads/uploads.routes.js";
 import usersRoutes from "./modules/users/users.routes.js";
 import messagesRoutes from "./modules/messages/messages.routes.js";
+import bookmarksRoutes from "./modules/bookmarks/bookmarks.routes.js";
+import notificationsRoutes from "./modules/notifications/notifications.routes.js";
 import { setupSocketServer } from "./modules/messages/messages.socket.js";
 import { initMessagesTable } from "./modules/messages/messages.db.js";
+import { initBookmarksTable } from "./modules/bookmarks/bookmarks.db.js";
+import { initNotificationsTable } from "./modules/notifications/notifications.db.js";
 
 dotenv.config();
 
@@ -29,7 +33,11 @@ setupSocketServer(httpServer);
 
 // Core middleware
 app.use(cors({
-    origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+    origin: [
+      process.env.CLIENT_ORIGIN || "http://localhost:5173",
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+    ],
     credentials: true,
 }));
 app.use(express.json());
@@ -43,6 +51,8 @@ app.use("/api/comments", commentsRoutes);
 app.use("/api/uploads", uploadsRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/messages", messagesRoutes);
+app.use("/api/bookmarks", bookmarksRoutes);
+app.use("/api/notifications", notificationsRoutes);
 
 // Database Health Check Route
 app.get("/api/health", async (_req, res) => {
@@ -71,4 +81,6 @@ app.get("/api/health", async (_req, res) => {
 httpServer.listen(PORT, async () => {
     console.log(`[Server]: Phatter API and Socket.io running on ${PORT}`);
     await initMessagesTable();
+    await initBookmarksTable();
+    await initNotificationsTable();
 });

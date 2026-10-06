@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { db } from "phatter-db";
 import { UserProfileSchema } from "@project-phatter/validation";
+import { createNotification } from "../notifications/notifications.db.js";
 
 export const getUserProfile = async (req: Request, res: Response) => {
   try {
@@ -169,6 +170,17 @@ export const followUser = async (req: Request, res: Response) => {
         followerId: currentUserId,
         followingId: targetUser.id,
       });
+
+      // Trigger real-time notification
+      try {
+        await createNotification({
+          recipientId: targetUser.id,
+          actorId: currentUserId,
+          type: "follow",
+        });
+      } catch (notifErr) {
+        console.error("Failed to send follow notification:", notifErr);
+      }
     }
 
     res.json({

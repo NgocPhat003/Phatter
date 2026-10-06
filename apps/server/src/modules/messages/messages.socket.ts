@@ -12,7 +12,14 @@ let io: SocketIOServer | null = null;
 const onlineUsers = new Map<string, number>();
 
 /**
- * Helper to parse cookies from raw cookie header string.
+ * Returns the array of unique currently online user IDs.
+ */
+export function getOnlineUserIds(): string[] {
+  return Array.from(onlineUsers.keys());
+}
+
+/**
+ * Helper to parse cookies from raw cookie header string safely.
  */
 function parseCookies(cookieHeader?: string): Record<string, string> {
   const cookies: Record<string, string> = {};
@@ -21,7 +28,13 @@ function parseCookies(cookieHeader?: string): Record<string, string> {
   cookieHeader.split(";").forEach((pair) => {
     const [name, ...rest] = pair.split("=");
     if (name) {
-      cookies[name.trim()] = decodeURIComponent(rest.join("=").trim());
+      const trimmedName = name.trim();
+      const rawVal = rest.join("=").trim();
+      try {
+        cookies[trimmedName] = decodeURIComponent(rawVal);
+      } catch {
+        cookies[trimmedName] = rawVal;
+      }
     }
   });
 
@@ -32,9 +45,15 @@ function parseCookies(cookieHeader?: string): Record<string, string> {
  * Initializes and configures the Socket.io real-time engine.
  */
 export function setupSocketServer(httpServer: HTTPServer): SocketIOServer {
+  const allowedOrigins = [
+    process.env.CLIENT_ORIGIN || "http://localhost:5173",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+  ];
+
   io = new SocketIOServer(httpServer, {
     cors: {
-      origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+      origin: allowedOrigins,
       credentials: true,
     },
     pingInterval: 25000,
@@ -85,8 +104,21 @@ export function setupSocketServer(httpServer: HTTPServer): SocketIOServer {
     const currentSockets = onlineUsers.get(userId) || 0;
     onlineUsers.set(userId, currentSockets + 1);
 
-    // Broadcast updated online users list to all connected clients
-    io?.emit("online_users", Array.from(onlineUsers.keys()));
+    const onlineList = Array.from(onlineUsers.keys());
+    console.log(`[Socket]: User ${userId} connected (sockets: ${currentSockets + 1}). Online users: ${onlineList.length}`);
+
+    // Immediately send the current online users list to the newly connected socket
+    socket.emit("online_users", onlineList);
+
+    // Broadcast updated online users list to all other connected clients
+    socket.broadcast.emit("online_users", onlineList);
+
+    /**
+     * Respond to on-demand requests for current online users
+     */
+    socket.on("get_online_users", () => {
+      socket.emit("online_users", Array.from(onlineUsers.keys()));
+    });
 
     /**
      * STEP 4: Handle "send_message" event
@@ -181,7 +213,7 @@ export function setupSocketServer(httpServer: HTTPServer): SocketIOServer {
     /**
      * STEP 7: Disconnection handling
      */
-    socket.on("disconnect", () => {
+    socket.on("disconnect", (reason) => {
       const activeCount = (onlineUsers.get(userId) || 1) - 1;
       if (activeCount <= 0) {
         onlineUsers.delete(userId);
@@ -189,8 +221,11 @@ export function setupSocketServer(httpServer: HTTPServer): SocketIOServer {
         onlineUsers.set(userId, activeCount);
       }
 
-      // Broadcast updated online users
-      io?.emit("online_users", Array.from(onlineUsers.keys()));
+      const remainingOnline = Array.from(onlineUsers.keys());
+      console.log(`[Socket]: User ${userId} disconnected (${reason}). Remaining online: ${remainingOnline.length}`);
+
+      // Broadcast updated online users to all remaining connected clients
+      io?.emit("online_users", remainingOnline);
     });
   });
 

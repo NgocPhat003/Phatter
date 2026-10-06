@@ -1,0 +1,109 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 1.25rem;
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.subtitle {
+  font-size: 0.8125rem;
+  color: #64748b;
+  margin: 0.25rem 0 0 0;
+}
+
+.postsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 12px;
+}
+
+.spinnerContainer {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 0;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1.5rem;
+  text-align: center;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  border: 1px solid #f1f5f9;
+  margin-top: 1rem;
+}
+
+.emptyIconWrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: #ecfdf5;
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.emptyTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.5rem 0;
+}
+
+.emptyDesc {
+  font-size: 0.9rem;
+  color: #64748b;
+  max-width: 360px;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.5;
+}
+
+.exploreBtn {
+  background-color: #10b981;
+  color: #ffffff;
+  border: none;
+  padding: 0.625rem 1.25rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.exploreBtn:hover {
+  background-color: #059669;
+}
+

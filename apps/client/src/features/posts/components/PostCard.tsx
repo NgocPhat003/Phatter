@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { api } from "../../../lib/api";
 import type { Post } from "../types/types";
-import { Heart, MessageCircle } from "lucide-react";
+import { Heart, MessageCircle, Bookmark } from "lucide-react";
 import { CommentSection } from "./CommentSection";
 import styles from "./PostCard.module.css";
 
@@ -27,14 +27,17 @@ export const PostCard = ({
   const [likesCount, setLikesCount] = useState(post.engagement.likesCount);
   const [isLiked, setIsLiked] = useState(post.engagement.isLiked);
   const [isLiking, setIsLiking] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(Boolean(post.engagement.isBookmarked));
+  const [isBookmarking, setIsBookmarking] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentsCount, setCommentsCount] = useState(post.engagement.commentsCount);
 
   useEffect(() => {
     setLikesCount(post.engagement.likesCount);
     setIsLiked(Boolean(post.engagement.isLiked));
+    setIsBookmarked(Boolean(post.engagement.isBookmarked));
     setCommentsCount(post.engagement.commentsCount);
-  }, [post.id, post.engagement.isLiked, post.engagement.commentsCount]);
+  }, [post.id, post.engagement.isLiked, post.engagement.commentsCount, post.engagement.isBookmarked]);
 
   const handleToggleLike = async () => {
     if (!currentUser) {
@@ -69,6 +72,32 @@ export const PostCard = ({
           setIsLiking(false);
         }
       };
+
+  const handleToggleBookmark = async () => {
+    if (!currentUser) {
+      onRequireLogin();
+      return;
+    }
+
+    if (isBookmarking) return;
+    setIsBookmarking(true);
+
+    const prevBookmarked = isBookmarked;
+    const nextBookmarked = !prevBookmarked;
+    setIsBookmarked(nextBookmarked);
+
+    try {
+      const res = await api.post(`/bookmarks/${post.id}`);
+      if (res.data?.isBookmarked !== undefined) {
+        setIsBookmarked(Boolean(res.data.isBookmarked));
+      }
+    } catch (err) {
+      console.error("Failed to toggle bookmark:", err);
+      setIsBookmarked(prevBookmarked);
+    } finally {
+      setIsBookmarking(false);
+    }
+  };
 
   const handleToggleComments = () => {
     setShowComments((prev) => !prev);
@@ -166,6 +195,16 @@ export const PostCard = ({
         >
           <MessageCircle size={16} fill={showComments ? "currentColor" : "none"} />
           <span>{commentsCount}</span>
+        </button>
+        <button
+          type="button"
+          onClick={handleToggleBookmark}
+          disabled={isBookmarking}
+          className={`${styles.actionBtn} ${isBookmarked ? styles.bookmarked : ""}`}
+          title={isBookmarked ? "Remove bookmark" : "Save post to bookmarks"}
+        >
+          <Bookmark size={16} fill={isBookmarked ? "currentColor" : "none"} />
+          <span>{isBookmarked ? "Saved" : "Save"}</span>
         </button>
       </footer>
 

@@ -8,6 +8,7 @@ import {
   markConversationRead,
 } from "./messages.db.js";
 import { pool } from "../../shared/db/pg.js";
+import { getOnlineUserIds } from "./messages.socket.js";
 
 /**
  * GET /api/messages/conversations
@@ -184,6 +185,23 @@ export const getUnreadCount = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Get Unread Count Error:", error);
     res.status(500).json({ error: "Failed to fetch unread count" });
+  }
+};
+
+/**
+ * GET /api/messages/online-users
+ * Returns list of currently online user IDs.
+ */
+export const getOnlineUsers = async (_req: Request, res: Response) => {
+  try {
+    const onlineUserIds = getOnlineUserIds();
+    res.json({
+      status: "success",
+      onlineUserIds,
+    });
+  } catch (error) {
+    console.error("Get Online Users Error:", error);
+    res.status(500).json({ error: "Failed to fetch online users" });
   }
 };
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, Search } from "lucide-react";
 import { api } from "../../../lib/api";
+import { useOnlineUsers } from "../../../hooks/useOnlineUsers";
 import type { Conversation } from "../../posts/types/types";
 import styles from "./NewChatModal.module.css";
 
@@ -17,6 +18,7 @@ export const NewChatModal = ({
   onSelectUser,
   currentUsername,
 }: NewChatModalProps) => {
+  const onlineUserIds = useOnlineUsers();
   const [searchTerm, setSearchTerm] = useState("");
   const [users, setUsers] = useState<Conversation["partner"][]>([]);
   const [loading, setLoading] = useState(false);
@@ -93,42 +95,51 @@ export const NewChatModal = ({
               {searchTerm ? "No users found matching your query." : "No users available."}
             </div>
           ) : (
-            users.map((user) => (
-              <button
-                type="button"
-                key={user.id}
-                className={styles.userItem}
-                onClick={() => {
-                  onSelectUser(user);
-                  onClose();
-                }}
-              >
-                <div className={styles.userInfo}>
-                  {user.profilePictureUrl ? (
-                    <img
-                      src={user.profilePictureUrl}
-                      alt={user.username}
-                      className={styles.avatar}
-                    />
-                  ) : (
-                    <div className={styles.avatarPlaceholder}>
-                      {user.username.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div className={styles.userDetails}>
-                    <div className={styles.username}>
-                      {user.username}
-                      {user.isGuestSandbox && (
-                        <span className={styles.guestBadge}>Guest</span>
+            users.map((user) => {
+              const isOnline = onlineUserIds.has(String(user.id));
+              return (
+                <button
+                  type="button"
+                  key={user.id}
+                  className={styles.userItem}
+                  onClick={() => {
+                    onSelectUser(user);
+                    onClose();
+                  }}
+                >
+                  <div className={styles.userInfo}>
+                    <div className={styles.avatarContainer}>
+                      {user.profilePictureUrl ? (
+                        <img
+                          src={user.profilePictureUrl}
+                          alt={user.username}
+                          className={styles.avatar}
+                        />
+                      ) : (
+                        <div className={styles.avatarPlaceholder}>
+                          {user.username.charAt(0).toUpperCase()}
+                        </div>
                       )}
+                      {isOnline && <span className={styles.onlineBadge} />}
                     </div>
-                    <div className={styles.handle}>@{user.username}</div>
+                    <div className={styles.userDetails}>
+                      <div className={styles.username}>
+                        {user.username}
+                        {user.isGuestSandbox && (
+                          <span className={styles.guestBadge}>Guest</span>
+                        )}
+                        {isOnline && (
+                          <span className={styles.onlineStatusText}>• Online</span>
+                        )}
+                      </div>
+                      <div className={styles.handle}>@{user.username}</div>
+                    </div>
                   </div>
-                </div>
 
-                <span className={styles.selectBtn}>Chat</span>
-              </button>
-            ))
+                  <span className={styles.selectBtn}>Chat</span>
+                </button>
+              );
+            })
           )}
         </div>
       </div>

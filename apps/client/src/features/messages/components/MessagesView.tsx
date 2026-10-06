@@ -16,6 +16,7 @@ import type {
   CurrentUser,
 } from "../../posts/types/types";
 import { NewChatModal } from "./NewChatModal";
+import { useOnlineUsers } from "../../../hooks/useOnlineUsers";
 import styles from "./MessagesView.module.css";
 
 interface MessagesViewProps {
@@ -53,7 +54,7 @@ export const MessagesView = ({
   const [loadingConvs, setLoadingConvs] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [isPartnerTyping, setIsPartnerTyping] = useState(false);
-  const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
+  const onlineUserIds = useOnlineUsers();
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -157,11 +158,6 @@ export const MessagesView = ({
   useEffect(() => {
     const socket = connectSocket();
 
-    // Listen for updated online users
-    const handleOnlineUsers = (userIds: string[]) => {
-      setOnlineUserIds(new Set(userIds));
-    };
-
     // Listen for incoming message
     const handleNewMessage = (msg: DirectMessage) => {
       const currentActive = activePartnerRef.current;
@@ -264,7 +260,6 @@ export const MessagesView = ({
       }
     };
 
-    socket.on("online_users", handleOnlineUsers);
     socket.on("new_message", handleNewMessage);
     socket.on("message_sent", handleMessageSent);
     socket.on("user_typing", handleUserTyping);
@@ -272,7 +267,6 @@ export const MessagesView = ({
     socket.on("messages_read", handleMessagesRead);
 
     return () => {
-      socket.off("online_users", handleOnlineUsers);
       socket.off("new_message", handleNewMessage);
       socket.off("message_sent", handleMessageSent);
       socket.off("user_typing", handleUserTyping);
@@ -452,7 +446,7 @@ export const MessagesView = ({
           ) : (
             filteredConversations.map((c) => {
               const isSelected = activePartner?.id === c.partner.id;
-              const isPartnerOnline = onlineUserIds.has(c.partner.id);
+              const isPartnerOnline = onlineUserIds.has(String(c.partner.id));
 
               return (
                 <button
@@ -533,7 +527,7 @@ export const MessagesView = ({
                       {activePartner.username.charAt(0).toUpperCase()}
                     </div>
                   )}
-                  {onlineUserIds.has(activePartner.id) && (
+                  {Boolean(activePartner && onlineUserIds.has(String(activePartner.id))) && (
                     <span className={styles.onlineBadge} />
                   )}
                 </div>
@@ -547,12 +541,12 @@ export const MessagesView = ({
                   </div>
                   <span
                     className={`${styles.chatHeaderStatus} ${
-                      onlineUserIds.has(activePartner.id)
+                      activePartner && onlineUserIds.has(String(activePartner.id))
                         ? styles.statusOnline
                         : ""
                     }`}
                   >
-                    {onlineUserIds.has(activePartner.id)
+                    {activePartner && onlineUserIds.has(String(activePartner.id))
                       ? "Online now"
                       : "Offline"}
                   </span>

@@ -3,7 +3,7 @@ import { uploadImage } from "./uploads.controller.js";
 import { requireAuth } from "../../shared/middleware/auth.middleware.js";
 import { uploadMiddleware } from "../../shared/config/cloudinary.config.js";
 
-const router = Router();
+const router: Router = Router();
 
 // Full path: POST /api/uploads
 // We expect the form-data key to be named "image"

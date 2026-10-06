@@ -3,6 +3,8 @@ import { api } from "./lib/api";
 import { Login } from "./routes/Login";
 import { Home } from "./routes/Home";
 import { Spinner } from "./components/common/Spinner";
+import { disconnectSocket } from "./lib/socket";
+import { resetOnlineUsersTracker } from "./hooks/useOnlineUsers";
 import type { CurrentUser } from "./features/posts/types/types";
 
 function App() {
@@ -30,6 +32,8 @@ function App() {
     } catch (err) {
       console.error("Logout request failed:", err);
     } finally {
+      disconnectSocket();
+      resetOnlineUsersTracker();
       setCurrentUser(null);
     }
   };

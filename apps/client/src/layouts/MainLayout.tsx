@@ -2,9 +2,11 @@ import type { ReactNode } from "react";
 import {
   Feather,
   Compass,
+  Bell,
   Hash,
   MessageSquare,
   Users,
+  Bookmark,
   Settings,
   Moon,
   LogOut,
@@ -15,14 +17,17 @@ interface MainLayoutProps {
   children: ReactNode;
   currentUser: string | null;
   currentUserAvatar?: string | null;
-  activeView?: "timeline" | "directory" | "profile" | "hashtags" | "messages";
+  activeView?: "timeline" | "directory" | "profile" | "hashtags" | "messages" | "bookmarks" | "notifications";
   onLogout: () => void;
   onOpenProfile?: (username: string) => void;
   onGoHome?: () => void;
   onOpenDirectory?: () => void;
   onOpenHashtags?: () => void;
   onOpenMessages?: () => void;
+  onOpenBookmarks?: () => void;
+  onOpenNotifications?: () => void;
   unreadMessagesCount?: number;
+  unreadNotificationsCount?: number;
 }
 
 export const MainLayout = ({
@@ -31,12 +36,15 @@ export const MainLayout = ({
   currentUserAvatar,
   activeView = "timeline",
   unreadMessagesCount = 0,
+  unreadNotificationsCount = 0,
   onLogout,
   onOpenProfile,
   onGoHome,
   onOpenDirectory,
   onOpenHashtags,
   onOpenMessages,
+  onOpenBookmarks,
+  onOpenNotifications,
 }: MainLayoutProps) => {
   return (
     <div className={styles.layoutContainer}>
@@ -62,6 +70,23 @@ export const MainLayout = ({
             >
               <Compass size={20} />
               <span className={styles.navLabel}>Timeline</span>
+            </button>
+            <button
+              className={`${styles.navItem} ${
+                activeView === "notifications" ? styles.activeNavItem : ""
+              }`}
+              title="Notifications"
+              onClick={onOpenNotifications}
+            >
+              <div className={styles.navIconWrapper}>
+                <Bell size={20} />
+                {unreadNotificationsCount > 0 && (
+                  <span className={styles.unreadBadge}>
+                    {unreadNotificationsCount > 99 ? "99+" : unreadNotificationsCount}
+                  </span>
+                )}
+              </div>
+              <span className={styles.navLabel}>Notifications</span>
             </button>
             <button
               className={`${styles.navItem} ${
@@ -93,6 +118,16 @@ export const MainLayout = ({
             </button>
             <button
               className={`${styles.navItem} ${
+                activeView === "bookmarks" ? styles.activeNavItem : ""
+              }`}
+              title="Bookmarks"
+              onClick={onOpenBookmarks}
+            >
+              <Bookmark size={20} />
+              <span className={styles.navLabel}>Bookmarks</span>
+            </button>
+            <button
+              className={`${styles.navItem} ${
                 activeView === "directory" ? styles.activeNavItem : ""
               }`}
               title="Directory"
@@ -100,7 +135,6 @@ export const MainLayout = ({
             >
               <Users size={20} />
               <span className={styles.navLabel}>Directory</span>
-
             </button>
             <button className={styles.navItem} title="Settings">
               <Settings size={20} />

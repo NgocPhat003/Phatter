@@ -2,7 +2,7 @@ import { Router } from "express";
 import { createPost, getPosts, getTrendingHashtags } from "./posts.controller.js";
 import { requireAuth, optionalAuth } from "../../shared/middleware/auth.middleware.js";
 
-const router = Router();
+const router: Router = Router();
 
 // Trending hashtags: GET /api/posts/hashtags/trending
 router.get("/hashtags/trending", getTrendingHashtags);
