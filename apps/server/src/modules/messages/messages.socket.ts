@@ -4,6 +4,7 @@ import crypto from "crypto";
 import { verifyAuthToken } from "../../shared/utils/jwt.util.js";
 import { jwtConfig } from "../../shared/config/jwt.config.js";
 import { insertMessage, markConversationRead } from "./messages.db.js";
+import { SendMessageSchema } from "@project-phatter/validation";
 
 // Global reference to the Socket.io server instance
 let io: SocketIOServer | null = null;
@@ -126,24 +127,21 @@ export function setupSocketServer(httpServer: HTTPServer): SocketIOServer {
      */
     socket.on("send_message", async (data: { receiverId: string; content: string; tempId?: string }) => {
       try {
-        const { receiverId, content, tempId } = data;
-        const cleanContent = content?.trim();
+        const { receiverId, tempId } = data || {};
+        const parseResult = SendMessageSchema.safeParse({ content: data?.content });
 
-        if (!receiverId || !cleanContent) {
+        if (!receiverId || !parseResult.success) {
+          const errMsg = !receiverId
+            ? "Receiver ID is required"
+            : parseResult.error.issues?.[0]?.message || "Invalid message content";
           socket.emit("message_error", {
             tempId,
-            error: "Receiver ID and message content are required",
+            error: errMsg,
           });
           return;
         }
 
-        if (cleanContent.length > 5000) {
-          socket.emit("message_error", {
-            tempId,
-            error: "Message is too long (maximum 5000 characters)",
-          });
-          return;
-        }
+        const cleanContent = parseResult.data.content;
 
         const messageId = `msg_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
         const savedMessage = await insertMessage(messageId, userId, receiverId, cleanContent);

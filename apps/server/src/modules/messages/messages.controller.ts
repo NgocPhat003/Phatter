@@ -9,6 +9,7 @@ import {
 } from "./messages.db.js";
 import { pool } from "../../shared/db/pg.js";
 import { getOnlineUserIds } from "./messages.socket.js";
+import { SendMessageSchema } from "@project-phatter/validation";
 
 /**
  * GET /api/messages/conversations
@@ -130,18 +131,21 @@ export const sendMessageHttp = async (req: Request, res: Response) => {
       (req as any).user?.sub;
 
     const { partnerId } = req.params;
-    const { content } = req.body;
 
     if (!currentUserId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    if (!content || typeof content !== "string" || !content.trim()) {
-      return res.status(400).json({ error: "Message content cannot be empty" });
+    const parseResult = SendMessageSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      const errorMessage = parseResult.error.issues?.[0]?.message || "Invalid message data";
+      return res.status(400).json({ error: errorMessage });
     }
 
+    const { content } = parseResult.data;
+
     const messageId = `msg_${crypto.randomUUID()}`;
-    const saved = await insertMessage(messageId, currentUserId, partnerId, content.trim());
+    const saved = await insertMessage(messageId, currentUserId, partnerId, content);
 
     res.status(201).json({
       status: "success",

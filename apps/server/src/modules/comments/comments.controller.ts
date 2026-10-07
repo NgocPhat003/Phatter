@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import crypto from "crypto";
 import { pool } from "../../shared/db/pg.js";
 import { createNotification } from "../notifications/notifications.db.js";
+import { CreateCommentSchema } from "@project-phatter/validation";
 
 /**
  * GET /api/comments/:postId
@@ -85,7 +86,6 @@ export const getComments = async (req: Request, res: Response) => {
 export const createComment = async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;
-    const { content, parentId } = req.body;
     const currentUserId =
       (req as any).user?.userId ||
       (req as any).user?.id ||
@@ -95,9 +95,13 @@ export const createComment = async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    if (!content || typeof content !== "string" || !content.trim()) {
-      return res.status(400).json({ error: "Comment content cannot be empty" });
+    const parseResult = CreateCommentSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      const errorMessage = parseResult.error.issues?.[0]?.message || "Invalid comment data";
+      return res.status(400).json({ error: errorMessage });
     }
+
+    const { content, parentId } = parseResult.data;
 
     let replyToUsername: string | null = null;
     let validParentId: string | null = null;

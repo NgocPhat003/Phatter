@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { signAuthToken } from "../../shared/utils/jwt.util.js";
 import { jwtConfig } from "../../shared/config/jwt.config.js";
 import { pool } from "../../shared/db/pg.js";
+import { RegisterSchema, LoginSchema } from "@project-phatter/validation";
 
 // Helper: Ensure a unique username for social logins
 const getUniqueUsername = async (desiredName: string): Promise<string> => {
@@ -27,20 +28,13 @@ const getUniqueUsername = async (desiredName: string): Promise<string> => {
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { username, email, password, bio } = req.body;
-
-    if (!username || !email) {
-      return res.status(400).json({ error: "Username and email are required" });
+    const parseResult = RegisterSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      const errorMessage = parseResult.error.issues?.[0]?.message || "Invalid registration data";
+      return res.status(400).json({ error: errorMessage });
     }
 
-    if (!password || typeof password !== "string" || password.length < 6) {
-      return res
-        .status(400)
-        .json({ error: "Password must be at least 6 characters long" });
-    }
-
-    const cleanUsername = username.trim();
-    const cleanEmail = email.trim().toLowerCase();
+    const { username: cleanUsername, email: cleanEmail, password, bio } = parseResult.data;
 
     // Check if username or email already taken
     const existingCheck = await pool.query(
@@ -97,15 +91,13 @@ export const register = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const { identifier, password } = req.body;
-
-    if (!identifier || !password) {
-      return res
-        .status(400)
-        .json({ error: "Username/email and password are required" });
+    const parseResult = LoginSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      const errorMessage = parseResult.error.issues?.[0]?.message || "Invalid credentials format";
+      return res.status(400).json({ error: errorMessage });
     }
 
-    const clean = identifier.trim();
+    const { identifier: clean, password } = parseResult.data;
 
     // Query user by username or email
     const queryRes = await pool.query(

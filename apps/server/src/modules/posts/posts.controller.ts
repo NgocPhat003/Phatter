@@ -1,19 +1,23 @@
 import type { Request, Response } from "express";
 import { db } from "phatter-db";
 import { getUserBookmarkedPostIds } from "../bookmarks/bookmarks.db.js";
+import { CreatePostSchema } from "@project-phatter/validation";
 
 export const createPost = async (req: Request, res: Response) => {
     try {
-        const { content, imageUrl } = req.body;
         const userId = req.user?.userId;
 
         if (!userId) {
             return res.status(401).json({ error: "Unauthorized" });
         }
 
-        if (!content || typeof content !== "string") {
-            return res.status(400).json({ error: "Post content is required" });
+        const parseResult = CreatePostSchema.safeParse(req.body);
+        if (!parseResult.success) {
+            const errorMessage = parseResult.error.issues?.[0]?.message || "Invalid post data";
+            return res.status(400).json({ error: errorMessage });
         }
+
+        const { content, imageUrl } = parseResult.data;
 
         // Prisma create
         const newPost = await db.orm.public.Post?.create({
