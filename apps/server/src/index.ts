@@ -17,7 +17,7 @@ import bookmarksRoutes from "./modules/bookmarks/bookmarks.routes.js";
 import notificationsRoutes from "./modules/notifications/notifications.routes.js";
 import { setupSocketServer } from "./modules/messages/messages.socket.js";
 import { initMessagesTable } from "./modules/messages/messages.db.js";
-import { initBookmarksTable } from "./modules/bookmarks/bookmarks.db.js";
+import { initBookmarksTable } from "./modules/bookmarks/bookmarks.controller.js";
 import { initNotificationsTable } from "./modules/notifications/notifications.db.js";
 
 dotenv.config();

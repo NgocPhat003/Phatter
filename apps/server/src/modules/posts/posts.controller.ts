@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { db } from "phatter-db";
-import { getUserBookmarkedPostIds } from "../bookmarks/bookmarks.db.js";
+import { getUserBookmarkedPostIds } from "../bookmarks/bookmarks.controller.js";
 import { CreatePostSchema } from "@project-phatter/validation";
 
 export const createPost = async (req: Request, res: Response) => {
