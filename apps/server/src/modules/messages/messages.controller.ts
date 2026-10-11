@@ -7,7 +7,6 @@ import {
   insertMessage,
   markConversationRead,
 } from "./messages.db.js";
-import { pool } from "../../shared/db/pg.js";
 import { getOnlineUserIds } from "./messages.socket.js";
 import { SendMessageSchema } from "@project-phatter/validation";
 
@@ -175,16 +174,14 @@ export const getUnreadCount = async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const countRes = await pool.query(
-      `SELECT COUNT(*)::int as count FROM direct_messages WHERE receiver_id = $1 AND is_read = FALSE`,
-      [currentUserId]
-    );
-
-    const unreadCount = Number(countRes.rows[0]?.count) || 0;
+    const unread = (await db.orm.public.DirectMessage?.where({
+      receiverId: currentUserId,
+      isRead: false,
+    }).all()) || [];
 
     res.json({
       status: "success",
-      unreadCount,
+      unreadCount: unread.length,
     });
   } catch (error) {
     console.error("Get Unread Count Error:", error);

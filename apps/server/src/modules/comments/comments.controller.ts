@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import crypto from "crypto";
-import { pool } from "../../shared/db/pg.js";
+import { db } from "phatter-db";
 import { createNotification } from "../notifications/notifications.db.js";
 import { CreateCommentSchema } from "@project-phatter/validation";
 
@@ -12,43 +12,42 @@ export const getComments = async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;
 
-    const query = `
-      SELECT 
-        c.id, 
-        c.content, 
-        c."createdAt", 
-        c."authorId", 
-        c."parentId",
-        u.id as "author_id", 
-        u.username as "author_username", 
-        u."profilePictureUrl" as "author_avatar", 
-        u."isGuestSandbox" as "author_guest",
-        pu.username as "replyToUsername"
-      FROM "comment" c
-      LEFT JOIN "user" u ON c."authorId" = u.id
-      LEFT JOIN "comment" pc ON c."parentId" = pc.id
-      LEFT JOIN "user" pu ON pc."authorId" = pu.id
-      WHERE c."postId" = $1
-      ORDER BY c."createdAt" ASC;
-    `;
+    const comments = (await db.orm.public.Comment?.where({ postId }).all()) || [];
 
-    const result = await pool.query(query, [postId]);
+    // Sort by createdAt ascending
+    comments.sort((a: any, b: any) => new Date(String(a.createdAt)).getTime() - new Date(String(b.createdAt)).getTime());
 
-    const rawComments = result.rows.map((row) => ({
-      id: row.id,
-      content: row.content,
-      createdAt: row.createdAt,
-      parentId: row.parentId || null,
-      replyToUsername: row.replyToUsername || null,
-      author: row.author_id
-        ? {
-            id: row.author_id,
-            username: row.author_username,
-            profilePictureUrl: row.author_avatar,
-            isGuestSandbox: Boolean(row.author_guest),
+    // Enrich comments with author and replyTo details
+    const rawComments = await Promise.all(
+      comments.map(async (c: any) => {
+        const author = await db.orm.public.User?.where({ id: c.authorId }).first();
+        let replyToUsername: string | null = null;
+
+        if (c.parentId) {
+          const parentComment = await db.orm.public.Comment?.where({ id: c.parentId }).first();
+          if (parentComment) {
+            const parentAuthor = await db.orm.public.User?.where({ id: parentComment.authorId }).first();
+            replyToUsername = parentAuthor?.username || null;
           }
-        : null,
-    }));
+        }
+
+        return {
+          id: c.id,
+          content: c.content,
+          createdAt: c.createdAt,
+          parentId: c.parentId || null,
+          replyToUsername,
+          author: author
+            ? {
+                id: author.id,
+                username: author.username,
+                profilePictureUrl: author.profilePictureUrl,
+                isGuestSandbox: Boolean(author.isGuestSandbox),
+              }
+            : null,
+        };
+      })
+    );
 
     // Build comment chain trees
     const commentMap = new Map<string, any>();
@@ -59,11 +58,10 @@ export const getComments = async (req: Request, res: Response) => {
     const rootComments: any[] = [];
 
     rawComments.forEach((c) => {
-      const current = commentMap.get(c.id);
       if (c.parentId && commentMap.has(c.parentId)) {
-        commentMap.get(c.parentId).replies.push(current);
+        commentMap.get(c.parentId).replies.push(commentMap.get(c.id));
       } else {
-        rootComments.push(current);
+        rootComments.push(commentMap.get(c.id));
       }
     });
 
@@ -71,7 +69,6 @@ export const getComments = async (req: Request, res: Response) => {
       status: "success",
       count: rawComments.length,
       comments: rootComments,
-      flatComments: rawComments,
     });
   } catch (error) {
     console.error("Get Comments Error:", error);
@@ -107,50 +104,35 @@ export const createComment = async (req: Request, res: Response) => {
     let validParentId: string | null = null;
 
     if (parentId && typeof parentId === "string") {
-      const parentCheck = await pool.query(
-        `
-        SELECT c.id, c."postId", u.username
-        FROM "comment" c
-        LEFT JOIN "user" u ON c."authorId" = u.id
-        WHERE c.id = $1
-        `,
-        [parentId]
-      );
-
-      if (parentCheck.rows.length > 0) {
-        validParentId = parentCheck.rows[0].id;
-        replyToUsername = parentCheck.rows[0].username || null;
+      const parentComment = await db.orm.public.Comment?.where({ id: parentId }).first();
+      if (parentComment) {
+        validParentId = parentComment.id;
+        const parentUser = await db.orm.public.User?.where({ id: parentComment.authorId }).first();
+        replyToUsername = parentUser?.username || null;
       }
     }
 
     const commentId = `cmt_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
-    const insertQuery = `
-      INSERT INTO "comment" (id, content, "postId", "authorId", "parentId", "createdAt")
-      VALUES ($1, $2, $3, $4, $5, NOW())
-      RETURNING id, content, "postId", "authorId", "parentId", "createdAt";
-    `;
 
-    const insertRes = await pool.query(insertQuery, [
-      commentId,
-      content.trim(),
+    const newComment = await db.orm.public.Comment?.create({
+      id: commentId,
+      content: content.trim(),
       postId,
-      currentUserId,
-      validParentId,
-    ]);
+      authorId: currentUserId,
+      parentId: validParentId,
+    });
 
-    const row = insertRes.rows[0];
+    if (!newComment) {
+      return res.status(500).json({ error: "Failed to create comment" });
+    }
 
-    const authorRes = await pool.query(
-      'SELECT id, username, "profilePictureUrl", "isGuestSandbox" FROM "user" WHERE id = $1',
-      [currentUserId]
-    );
-
-    const author = authorRes.rows[0]
+    const authorUser = await db.orm.public.User?.where({ id: currentUserId }).first();
+    const author = authorUser
       ? {
-          id: authorRes.rows[0].id,
-          username: authorRes.rows[0].username,
-          profilePictureUrl: authorRes.rows[0].profilePictureUrl,
-          isGuestSandbox: Boolean(authorRes.rows[0].isGuestSandbox),
+          id: authorUser.id,
+          username: authorUser.username,
+          profilePictureUrl: authorUser.profilePictureUrl,
+          isGuestSandbox: Boolean(authorUser.isGuestSandbox),
         }
       : null;
 
@@ -158,8 +140,8 @@ export const createComment = async (req: Request, res: Response) => {
     try {
       let notifiedParentAuthor = false;
       if (validParentId) {
-        const parentAuthorRes = await pool.query('SELECT "authorId" FROM "comment" WHERE id = $1', [validParentId]);
-        const parentAuthorId = parentAuthorRes.rows[0]?.authorId;
+        const parentComment = await db.orm.public.Comment?.where({ id: validParentId }).first();
+        const parentAuthorId = parentComment?.authorId;
         if (parentAuthorId && String(parentAuthorId) !== String(currentUserId)) {
           notifiedParentAuthor = true;
           await createNotification({
@@ -167,15 +149,15 @@ export const createComment = async (req: Request, res: Response) => {
             actorId: currentUserId,
             type: "reply",
             postId,
-            commentId: row.id,
+            commentId: newComment.id,
             content: content.trim().slice(0, 100),
           });
         }
       }
 
       // Notify post author if not already notified as parent author
-      const postRes = await pool.query('SELECT "authorId" FROM "post" WHERE id = $1', [postId]);
-      const postAuthorId = postRes.rows[0]?.authorId;
+      const post = await db.orm.public.Post?.where({ id: postId }).first();
+      const postAuthorId = post?.authorId;
       if (
         postAuthorId &&
         String(postAuthorId) !== String(currentUserId) &&
@@ -186,7 +168,7 @@ export const createComment = async (req: Request, res: Response) => {
           actorId: currentUserId,
           type: "comment",
           postId,
-          commentId: row.id,
+          commentId: newComment.id,
           content: content.trim().slice(0, 100),
         });
       }
@@ -197,17 +179,18 @@ export const createComment = async (req: Request, res: Response) => {
     res.status(201).json({
       status: "success",
       comment: {
-        id: row.id,
-        content: row.content,
-        createdAt: row.createdAt,
-        parentId: row.parentId,
+        id: newComment.id,
+        content: newComment.content,
+        postId: newComment.postId,
+        createdAt: newComment.createdAt,
+        parentId: newComment.parentId,
         replyToUsername,
-        replies: [],
         author,
+        replies: [],
       },
     });
   } catch (error) {
     console.error("Create Comment Error:", error);
-    res.status(500).json({ error: "Failed to post comment" });
+    res.status(500).json({ error: "Failed to create comment" });
   }
 };

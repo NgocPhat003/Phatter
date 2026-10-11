@@ -4,13 +4,23 @@ model User {
   username          String    @unique
   profilePictureUrl String?
   bio               String?
+  passwordHash      String?
   isGuestSandbox    Boolean   @default(false)
   createdAt         DateTime  @default(now())
 
   posts     Post[]
   comments  Comment[]
   likes     Like[]
+  bookmarks Bookmark[]
   
+  // Direct Messages
+  sentMessages     DirectMessage[] @relation("sentMessages")
+  receivedMessages DirectMessage[] @relation("receivedMessages")
+
+  // Notifications
+  receivedNotifications  Notification[]  @relation("receivedNotifications")
+  triggeredNotifications Notification[]  @relation("triggeredNotifications")
+
   // The Follow Mesh
   followers Follows[] @relation("following")
   following Follows[] @relation("follower")
@@ -36,16 +46,20 @@ model Post {
   comments  Comment[]
   likes     Like[]
   tags      PostTag[] 
+  bookmarks Bookmark[]
 }
 
 model Comment {
-  id        String   @id @default(cuid(2))
+  id        String    @id @default(cuid(2))
   content   String
   postId    String
   authorId  String
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  parentId  String?
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent    Comment?  @relation("replies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("replies")
+  createdAt DateTime  @default(now())
 }
 
 model Like {
@@ -58,13 +72,57 @@ model Like {
   @@unique([postId, userId])
 }
 
+model Bookmark {
+  id        String   @id @default(cuid(2))
+  postId    String   @map("post_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("bookmarks")
+}
+
+model DirectMessage {
+  id         String   @id @default(cuid(2))
+  senderId   String   @map("sender_id")
+  receiverId String   @map("receiver_id")
+  content    String
+  isRead     Boolean  @default(false) @map("is_read")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  sender     User     @relation("sentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User     @relation("receivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@map("direct_messages")
+}
+
+model Notification {
+  id          String   @id @default(cuid(2))
+  recipientId String   @map("recipient_id")
+  actorId     String   @map("actor_id")
+  type        String
+  postId      String?  @map("post_id")
+  commentId   String?  @map("comment_id")
+  content     String?
+  isRead      Boolean  @default(false) @map("is_read")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  recipient   User     @relation("receivedNotifications", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor       User     @relation("triggeredNotifications", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
 model Tag {
   id    String    @id @default(cuid(2))
   name  String    @unique
   posts PostTag[]
 }
 
-// NEW: Explicit Many-to-Many Join Table required by Prisma 8
+// Explicit Many-to-Many Join Table required by Prisma 8
 model PostTag {
   postId String
   tagId  String

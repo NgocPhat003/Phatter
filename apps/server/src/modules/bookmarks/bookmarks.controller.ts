@@ -1,28 +1,11 @@
 import type { Request, Response } from "express";
-import crypto from "crypto";
-import { pool } from "../../shared/db/pg.js";
 import { db } from "phatter-db";
 
 /**
- * Initializes the bookmarks table and indexes in PostgreSQL.
+ * Initializes the bookmarks table (handled by Prisma ORM contract).
  */
 export const initBookmarksTable = async () => {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS bookmarks (
-        id VARCHAR(64) PRIMARY KEY,
-        user_id VARCHAR(64) NOT NULL,
-        post_id VARCHAR(64) NOT NULL,
-        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(user_id, post_id)
-      );
-    `);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_bookmarks_user_id ON bookmarks(user_id);`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_bookmarks_post_id ON bookmarks(post_id);`);
-    console.log("[Bookmarks DB]: bookmarks table ready.");
-  } catch (error) {
-    console.error("[Bookmarks DB Init Error]:", error);
-  }
+  // Handled natively by Prisma ORM contract model Bookmark
 };
 
 /**
@@ -30,13 +13,10 @@ export const initBookmarksTable = async () => {
  */
 export const getUserBookmarkedPostIds = async (userId: string): Promise<Set<string>> => {
   try {
-    const res = await pool.query(
-      `SELECT post_id FROM bookmarks WHERE user_id = $1`,
-      [userId]
-    );
-    return new Set(res.rows.map((r) => String(r.post_id)));
+    const bookmarks = (await db.orm.public.Bookmark?.where({ userId }).all()) || [];
+    return new Set(bookmarks.map((b: any) => String(b.postId)));
   } catch (error) {
-    console.error("[Bookmarks DB] getUserBookmarkedPostIds error:", error);
+    console.error("[Bookmarks] getUserBookmarkedPostIds error:", error);
     return new Set();
   }
 };
@@ -63,17 +43,14 @@ export const toggleBookmark = async (req: Request, res: Response) => {
     }
 
     // Check if bookmark exists
-    const existing = await pool.query(
-      `SELECT id FROM bookmarks WHERE user_id = $1 AND post_id = $2 LIMIT 1`,
-      [currentUserId, postId]
-    );
+    const existing = await db.orm.public.Bookmark?.where({
+      userId: currentUserId,
+      postId,
+    }).first();
 
-    if (existing.rows.length > 0) {
+    if (existing) {
       // Remove bookmark
-      await pool.query(
-        `DELETE FROM bookmarks WHERE user_id = $1 AND post_id = $2`,
-        [currentUserId, postId]
-      );
+      await db.orm.public.Bookmark?.where({ id: existing.id }).delete();
       return res.json({
         status: "success",
         isBookmarked: false,
@@ -82,11 +59,10 @@ export const toggleBookmark = async (req: Request, res: Response) => {
     }
 
     // Create bookmark
-    const bookmarkId = `bkm_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
-    await pool.query(
-      `INSERT INTO bookmarks (id, user_id, post_id, created_at) VALUES ($1, $2, $3, NOW())`,
-      [bookmarkId, currentUserId, postId]
-    );
+    await db.orm.public.Bookmark?.create({
+      postId,
+      userId: currentUserId,
+    });
 
     res.json({
       status: "success",
@@ -114,12 +90,9 @@ export const getBookmarks = async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const bookmarkRes = await pool.query(
-      `SELECT post_id, created_at FROM bookmarks WHERE user_id = $1 ORDER BY created_at DESC`,
-      [currentUserId]
-    );
+    const bookmarks = (await db.orm.public.Bookmark?.where({ userId: currentUserId }).all()) || [];
 
-    if (bookmarkRes.rows.length === 0) {
+    if (bookmarks.length === 0) {
       return res.json({
         status: "success",
         count: 0,
@@ -127,7 +100,7 @@ export const getBookmarks = async (req: Request, res: Response) => {
       });
     }
 
-    const postIds = bookmarkRes.rows.map((r) => r.post_id);
+    const postIds = bookmarks.map((b: any) => b.postId);
 
     // Fetch and enrich all bookmarked posts
     const enrichedList = await Promise.all(

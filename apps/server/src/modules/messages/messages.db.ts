@@ -1,27 +1,10 @@
-import { pool } from "../../shared/db/pg.js";
-export { pool };
+import { db } from "phatter-db";
 
 /**
- * Initializes the direct_messages table if it does not already exist.
+ * Initializes the direct_messages table (handled by Prisma ORM contract).
  */
 export const initMessagesTable = async () => {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS direct_messages (
-        id VARCHAR(64) PRIMARY KEY,
-        sender_id VARCHAR(64) NOT NULL,
-        receiver_id VARCHAR(64) NOT NULL,
-        content TEXT NOT NULL,
-        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        is_read BOOLEAN DEFAULT FALSE
-      );
-    `);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_dm_participants ON direct_messages(sender_id, receiver_id);`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_dm_created_at ON direct_messages(created_at DESC);`);
-    console.log("[Messages DB]: direct_messages table ready.");
-  } catch (error) {
-    console.error("[Messages DB Init Error]:", error);
-  }
+  // Handled natively by Prisma ORM contract model DirectMessage
 };
 
 export interface MessageRecord {
@@ -42,15 +25,22 @@ export const insertMessage = async (
   receiverId: string,
   content: string
 ): Promise<MessageRecord> => {
-  const result = await pool.query(
-    `
-    INSERT INTO direct_messages (id, sender_id, receiver_id, content, created_at, is_read)
-    VALUES ($1, $2, $3, $4, NOW(), FALSE)
-    RETURNING id, sender_id AS "senderId", receiver_id AS "receiverId", content, created_at AS "createdAt", is_read AS "isRead"
-    `,
-    [id, senderId, receiverId, content]
-  );
-  return result.rows[0];
+  const msg = await db.orm.public.DirectMessage?.create({
+    id,
+    senderId,
+    receiverId,
+    content,
+    isRead: false,
+  });
+
+  return {
+    id: msg.id,
+    senderId: msg.senderId,
+    receiverId: msg.receiverId,
+    content: msg.content,
+    createdAt: msg.createdAt,
+    isRead: msg.isRead,
+  };
 };
 
 /**
@@ -60,77 +50,70 @@ export const fetchConversationMessages = async (
   userA: string,
   userB: string
 ): Promise<MessageRecord[]> => {
-  const result = await pool.query(
-    `
-    SELECT id, sender_id AS "senderId", receiver_id AS "receiverId", content, created_at AS "createdAt", is_read AS "isRead"
-    FROM direct_messages
-    WHERE (sender_id = $1 AND receiver_id = $2)
-       OR (sender_id = $2 AND receiver_id = $1)
-    ORDER BY created_at ASC
-    LIMIT 100
-    `,
-    [userA, userB]
+  const sent = (await db.orm.public.DirectMessage?.where({ senderId: userA, receiverId: userB }).all()) || [];
+  const received = (await db.orm.public.DirectMessage?.where({ senderId: userB, receiverId: userA }).all()) || [];
+  const combined = [...sent, ...received];
+
+  combined.sort(
+    (a: any, b: any) => new Date(String(a.createdAt)).getTime() - new Date(String(b.createdAt)).getTime()
   );
-  return result.rows;
+
+  return combined.slice(-100).map((m: any) => ({
+    id: m.id,
+    senderId: m.senderId,
+    receiverId: m.receiverId,
+    content: m.content,
+    createdAt: String(m.createdAt),
+    isRead: m.isRead,
+  }));
 };
 
 /**
  * Fetches the list of active conversations for a user, including the last message and unread count.
  */
 export const fetchUserConversations = async (userId: string) => {
-  const result = await pool.query(
-    `
-    WITH user_messages AS (
-      SELECT 
-        id,
-        sender_id,
-        receiver_id,
-        content,
-        created_at,
-        is_read,
-        CASE 
-          WHEN sender_id = $1 THEN receiver_id 
-          ELSE sender_id 
-        END AS partner_id
-      FROM direct_messages
-      WHERE sender_id = $1 OR receiver_id = $1
-    ),
-    ranked_messages AS (
-      SELECT 
-        *,
-        ROW_NUMBER() OVER(PARTITION BY partner_id ORDER BY created_at DESC) as rn
-      FROM user_messages
-    )
-    SELECT 
-      rm.id AS "lastMessageId",
-      rm.partner_id AS "partnerId",
-      rm.sender_id AS "lastSenderId",
-      rm.content AS "lastMessageContent",
-      rm.created_at AS "lastMessageAt",
-      (
-        SELECT COUNT(*)::int 
-        FROM direct_messages 
-        WHERE receiver_id = $1 AND sender_id = rm.partner_id AND is_read = FALSE
-      ) AS "unreadCount"
-    FROM ranked_messages rm
-    WHERE rm.rn = 1
-    ORDER BY rm.created_at DESC;
-    `,
-    [userId]
-  );
-  return result.rows;
+  const sent = (await db.orm.public.DirectMessage?.where({ senderId: userId }).all()) || [];
+  const received = (await db.orm.public.DirectMessage?.where({ receiverId: userId }).all()) || [];
+  const all = [...sent, ...received];
+
+  // Group by partnerId
+  const convMap = new Map<string, any[]>();
+  for (const m of all) {
+    const partnerId = String(m.senderId) === String(userId) ? m.receiverId : m.senderId;
+    if (!convMap.has(partnerId)) {
+      convMap.set(partnerId, []);
+    }
+    convMap.get(partnerId)!.push(m);
+  }
+
+  const convList: any[] = [];
+  for (const [partnerId, msgs] of convMap.entries()) {
+    msgs.sort((a, b) => new Date(String(b.createdAt)).getTime() - new Date(String(a.createdAt)).getTime());
+    const last = msgs[0];
+    const unreadCount = msgs.filter((m) => String(m.receiverId) === String(userId) && !m.isRead).length;
+
+    convList.push({
+      lastMessageId: last.id,
+      partnerId,
+      lastSenderId: last.senderId,
+      lastMessageContent: last.content,
+      lastMessageAt: String(last.createdAt),
+      unreadCount,
+    });
+  }
+
+  convList.sort((a, b) => new Date(String(b.lastMessageAt)).getTime() - new Date(String(a.lastMessageAt)).getTime());
+  return convList;
 };
 
 /**
  * Marks all incoming messages from a specific sender as read.
  */
 export const markConversationRead = async (receiverId: string, senderId: string) => {
-  await pool.query(
-    `
-    UPDATE direct_messages
-    SET is_read = TRUE
-    WHERE receiver_id = $1 AND sender_id = $2 AND is_read = FALSE
-    `,
-    [receiverId, senderId]
+  const unread = (await db.orm.public.DirectMessage?.where({ receiverId, senderId, isRead: false }).all()) || [];
+  await Promise.all(
+    unread.map(async (m: any) => {
+      await db.orm.public.DirectMessage?.where({ id: m.id }).update({ isRead: true });
+    })
   );
 };
