@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Reply, ChevronDown, ChevronUp } from "lucide-react";
+import { Reply, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import { api } from "../../../lib/api";
 import type { Comment } from "../types/types";
 import { Spinner } from "../../../components/common/Spinner";
@@ -23,6 +23,7 @@ interface CommentItemProps {
   setActiveReplyId: (id: string | null) => void;
   onRequireLogin: () => void;
   onAddReply: (parentId: string, reply: Comment) => void;
+  onDeleteComment: (commentId: string) => Promise<void> | void;
   onOpenProfile?: (username: string) => void;
   formatDate: (dateStr: string) => string;
 }
@@ -35,13 +36,22 @@ const CommentItem = ({
   setActiveReplyId,
   onRequireLogin,
   onAddReply,
+  onDeleteComment,
   onOpenProfile,
   formatDate,
 }: CommentItemProps) => {
   const [replyText, setReplyText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showReplies, setShowReplies] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
   const replyInputRef = useRef<HTMLTextAreaElement>(null);
+
+  const isAuthor = Boolean(
+    currentUser &&
+      (typeof currentUser === "string"
+        ? currentUser === comment.author?.username
+        : (currentUser as any)?.username === comment.author?.username)
+  );
 
   const isReplying = activeReplyId === comment.id;
   const hasReplies = comment.replies && comment.replies.length > 0;
@@ -62,6 +72,19 @@ const CommentItem = ({
     } else {
       setActiveReplyId(comment.id);
       setReplyText("");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (isDeleting) return;
+    const ok = window.confirm("Are you sure you want to delete this comment?");
+    if (!ok) return;
+
+    try {
+      setIsDeleting(true);
+      await onDeleteComment(comment.id);
+    } catch {
+      setIsDeleting(false);
     }
   };
 
@@ -177,6 +200,19 @@ const CommentItem = ({
                 </span>
               </button>
             )}
+
+            {isAuthor && (
+              <button
+                type="button"
+                className={styles.deleteActionBtn}
+                onClick={handleDelete}
+                disabled={isDeleting}
+                title="Delete comment"
+              >
+                <Trash2 size={13} />
+                <span>{isDeleting ? "Deleting..." : "Delete"}</span>
+              </button>
+            )}
           </div>
 
           {/* Inline Reply Input */}
@@ -238,6 +274,7 @@ const CommentItem = ({
               setActiveReplyId={setActiveReplyId}
               onRequireLogin={onRequireLogin}
               onAddReply={onAddReply}
+              onDeleteComment={onDeleteComment}
               onOpenProfile={onOpenProfile}
               formatDate={formatDate}
             />
@@ -358,6 +395,57 @@ export const CommentSection = ({
       minute: "2-digit",
     });
 
+  const countSubtree = (item: Comment): number => {
+    let count = 1;
+    if (item.replies) {
+      for (const r of item.replies) {
+        count += countSubtree(r);
+      }
+    }
+    return count;
+  };
+
+  const removeCommentFromTree = (
+    list: Comment[],
+    targetId: string
+  ): { nextList: Comment[]; deletedCount: number } => {
+    let deletedCount = 0;
+    const nextList: Comment[] = [];
+
+    for (const item of list) {
+      if (item.id === targetId) {
+        deletedCount += countSubtree(item);
+      } else {
+        if (item.replies && item.replies.length > 0) {
+          const sub = removeCommentFromTree(item.replies, targetId);
+          deletedCount += sub.deletedCount;
+          nextList.push({
+            ...item,
+            replies: sub.nextList,
+          });
+        } else {
+          nextList.push(item);
+        }
+      }
+    }
+
+    return { nextList, deletedCount };
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      await api.delete(`/comments/${commentId}`);
+      setComments((prev) => {
+        const { nextList, deletedCount } = removeCommentFromTree(prev, commentId);
+        onCommentCountChange?.(-deletedCount);
+        return nextList;
+      });
+    } catch (err: any) {
+      console.error("Failed to delete comment:", err);
+      alert(err.response?.data?.error || "Failed to delete comment.");
+    }
+  };
+
   return (
     <div className={styles.section}>
       {/* Top-Level Comment Input */}
@@ -428,6 +516,7 @@ export const CommentSection = ({
               setActiveReplyId={setActiveReplyId}
               onRequireLogin={onRequireLogin}
               onAddReply={handleAddReply}
+              onDeleteComment={handleDeleteComment}
               onOpenProfile={onOpenProfile}
               formatDate={formatDate}
             />

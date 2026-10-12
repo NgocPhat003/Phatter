@@ -259,6 +259,7 @@ export const ProfileView = ({
               currentUserAvatar={currentUserAvatar}
               onRequireLogin={onRequireLogin}
               onPostUpdated={fetchProfile}
+              onPostDeleted={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))}
               onOpenProfile={onOpenProfile}
               onSelectHashtag={onSelectHashtag}
             />

@@ -297,6 +297,7 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
                 currentUserAvatar={currentUserAvatar}
                 onRequireLogin={() => {}}
                 onPostUpdated={fetchFeed}
+                onPostDeleted={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))}
                 onOpenProfile={(u) => setViewingProfile(u)}
                 onSelectHashtag={handleSelectHashtag}
               />

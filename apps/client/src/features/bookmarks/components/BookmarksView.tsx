@@ -93,6 +93,7 @@ export const BookmarksView = ({
               onOpenProfile={onOpenProfile}
               onSelectHashtag={onSelectHashtag}
               onPostUpdated={fetchBookmarks}
+              onPostDeleted={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))}
             />
           ))}
         </div>

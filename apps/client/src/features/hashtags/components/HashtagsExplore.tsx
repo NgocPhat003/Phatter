@@ -266,6 +266,7 @@ export const HashtagsExplore = ({
               currentUserAvatar={currentUserAvatar}
               onRequireLogin={onRequireLogin}
               onPostUpdated={fetchPosts}
+              onPostDeleted={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))}
               onOpenProfile={onOpenProfile}
               onSelectHashtag={(tag) => setSelectedTag(tag)}
             />

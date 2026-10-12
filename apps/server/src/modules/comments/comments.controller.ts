@@ -194,3 +194,55 @@ export const createComment = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to create comment" });
   }
 };
+
+export const deleteComment = async (req: Request, res: Response) => {
+  try {
+    const { commentId } = req.params;
+    const currentUserId = req.user?.userId;
+
+    if (!currentUserId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    if (!commentId || typeof commentId !== "string") {
+      return res.status(400).json({ error: "Invalid comment ID" });
+    }
+
+    const comment = await db.orm.public.Comment?.where({ id: commentId }).first();
+    if (!comment) {
+      return res.status(404).json({ error: "Comment not found" });
+    }
+
+    // Verify ownership: allow comment author or post author to delete
+    const post = await db.orm.public.Post?.where({ id: comment.postId }).first();
+    const isCommentAuthor = String(comment.authorId) === String(currentUserId);
+    const isPostAuthor = post && String(post.authorId) === String(currentUserId);
+
+    if (!isCommentAuthor && !isPostAuthor) {
+      return res.status(403).json({ error: "Forbidden: You cannot delete this comment" });
+    }
+
+    // Clean up notifications pointing to this comment
+    try {
+      const notifs = (await db.orm.public.Notification?.where({ commentId }).all()) || [];
+      await Promise.all(
+        notifs.map((n: any) => db.orm.public.Notification?.where({ id: n.id }).delete())
+      );
+    } catch (notifErr) {
+      console.warn("[deleteComment] Warning: Failed to clean up notifications for comment:", notifErr);
+    }
+
+    // Delete comment
+    await db.orm.public.Comment?.where({ id: commentId }).delete();
+
+    res.json({
+      status: "success",
+      message: "Comment deleted successfully",
+      commentId,
+      postId: comment.postId,
+    });
+  } catch (error) {
+    console.error("Delete Comment Error:", error);
+    res.status(500).json({ error: "Failed to delete comment" });
+  }
+};

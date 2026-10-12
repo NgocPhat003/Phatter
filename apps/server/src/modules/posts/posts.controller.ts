@@ -177,3 +177,50 @@ export const getTrendingHashtags = async (_req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to fetch trending hashtags" });
   }
 };
+
+export const deletePost = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const currentUserId = req.user?.userId;
+
+    if (!currentUserId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    if (!id || typeof id !== "string") {
+      return res.status(400).json({ error: "Invalid post ID" });
+    }
+
+    const post = await db.orm.public.Post?.where({ id }).first();
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    if (String(post.authorId) !== String(currentUserId)) {
+      return res.status(403).json({ error: "Forbidden: You cannot delete someone else's post" });
+    }
+
+    // Clean up any notifications pointing to this post
+    try {
+      const notifs = (await db.orm.public.Notification?.where({ postId: id }).all()) || [];
+      await Promise.all(
+        notifs.map((n: any) => db.orm.public.Notification?.where({ id: n.id }).delete())
+      );
+    } catch (notifErr) {
+      console.warn("[deletePost] Warning: Failed to clean up notifications for post:", notifErr);
+    }
+
+    // Delete post (cascades comments, likes, bookmarks via foreign keys)
+    await db.orm.public.Post?.where({ id }).delete();
+
+    res.json({
+      status: "success",
+      message: "Post deleted successfully",
+      postId: id,
+    });
+  } catch (error) {
+    console.error("Delete Post Error:", error);
+    res.status(500).json({ error: "Failed to delete post" });
+  }
+};
+

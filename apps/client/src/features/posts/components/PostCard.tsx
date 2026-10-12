@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { api } from "../../../lib/api";
 import type { Post } from "../types/types";
-import { Heart, MessageCircle, Bookmark } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, Trash2 } from "lucide-react";
 import { CommentSection } from "./CommentSection";
 import styles from "./PostCard.module.css";
 
@@ -11,6 +11,7 @@ interface PostCardProps {
   currentUserAvatar?: string | null;
   onRequireLogin: () => void;
   onPostUpdated?: () => void;
+  onPostDeleted?: (postId: string) => void;
   onOpenProfile?: (username: string) => void;
   onSelectHashtag?: (tag: string) => void;
 }
@@ -21,6 +22,7 @@ export const PostCard = ({
   currentUserAvatar,
   onRequireLogin,
   onPostUpdated: _onPostUpdated,
+  onPostDeleted,
   onOpenProfile,
   onSelectHashtag,
 }: PostCardProps) => {
@@ -29,8 +31,39 @@ export const PostCard = ({
   const [isLiking, setIsLiking] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(Boolean(post.engagement.isBookmarked));
   const [isBookmarking, setIsBookmarking] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentsCount, setCommentsCount] = useState(post.engagement.commentsCount);
+
+  const isOwner = Boolean(
+    currentUser &&
+      (typeof currentUser === "string"
+        ? currentUser === post.author?.username
+        : (currentUser as any)?.username === post.author?.username)
+  );
+
+  const handleDeletePost = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!currentUser) {
+      onRequireLogin();
+      return;
+    }
+    if (isDeleting) return;
+
+    const ok = window.confirm("Are you sure you want to delete this post? This cannot be undone.");
+    if (!ok) return;
+
+    try {
+      setIsDeleting(true);
+      await api.delete(`/posts/${post.id}`);
+      onPostDeleted?.(post.id);
+    } catch (err: any) {
+      console.error("Failed to delete post:", err);
+      alert(err.response?.data?.error || "Failed to delete post. Please try again.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   useEffect(() => {
     setLikesCount(post.engagement.likesCount);
@@ -147,6 +180,18 @@ export const PostCard = ({
           </div>
           <time className={styles.timestamp}>{formattedDate}</time>
         </div>
+
+        {isOwner && (
+          <button
+            type="button"
+            className={styles.deleteBtn}
+            onClick={handleDeletePost}
+            disabled={isDeleting}
+            title="Delete post"
+          >
+            <Trash2 size={16} />
+          </button>
+        )}
       </header>
 
       <p className={styles.bodyText}>

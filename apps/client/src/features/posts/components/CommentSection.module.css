@@ -325,3 +325,29 @@
 .loginLink:hover {
   color: var(--primary-hover);
 }
+
+.deleteActionBtn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.deleteActionBtn:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.deleteActionBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
