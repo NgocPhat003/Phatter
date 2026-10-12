@@ -22,3 +22,4 @@ router.get("/:username/followers", optionalAuth, getUserFollowers);
 router.get("/:username/following", optionalAuth, getUserFollowing);
 
 export default router;
+

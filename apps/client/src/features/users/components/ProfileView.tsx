@@ -44,7 +44,7 @@ export const ProfileView = ({
     try {
       setLoading(true);
       const res = await api.get(`/users/${username}`);
-      setProfile(res.data.profile);
+      setProfile(res.data.profile || res.data.user || null);
       setPosts(res.data.posts || []);
     } catch (err) {
       console.error("Failed to load user profile:", err);

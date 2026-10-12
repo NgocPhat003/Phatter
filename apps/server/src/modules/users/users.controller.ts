@@ -68,21 +68,25 @@ export const getUserProfile = async (req: Request, res: Response) => {
       })
     );
 
+    const profileData = {
+      id: user.id,
+      username: user.username,
+      bio: user.bio,
+      profilePictureUrl: user.profilePictureUrl,
+      isGuestSandbox: user.isGuestSandbox,
+      createdAt: user.createdAt,
+      followersCount: followers.length,
+      followingCount: following.length,
+      postsCount: posts.length,
+      isFollowing,
+      isSelf: Boolean(currentUserId && currentUserId === user.id),
+    };
+
     res.json({
       status: "success",
-      user: {
-        id: user.id,
-        username: user.username,
-        bio: user.bio,
-        profilePictureUrl: user.profilePictureUrl,
-        isGuestSandbox: user.isGuestSandbox,
-        createdAt: user.createdAt,
-        followersCount: followers.length,
-        followingCount: following.length,
-        postsCount: posts.length,
-        isFollowing,
-        isSelf: Boolean(currentUserId && currentUserId === user.id),
-      },
+      profile: profileData,
+      user: profileData,
+      postCount: enrichedPosts.length,
       posts: enrichedPosts,
     });
   } catch (error) {
