@@ -2,12 +2,14 @@ import { Router } from "express";
 import {
   getUserProfile,
   updateUserProfile,
+  getUsersDirectory,
+} from "./users.controller.js";
+import {
   followUser,
   unfollowUser,
-  getUsersDirectory,
   getUserFollowers,
   getUserFollowing,
-} from "./users.controller.js";
+} from "../follows/follows.controller.js";
 import { requireAuth, optionalAuth } from "../../shared/middleware/auth.middleware.js";
 
 const router: Router = Router();

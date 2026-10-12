@@ -1,7 +1,6 @@
 import type { Request, Response } from "express";
 import { db } from "phatter-db";
 import { UserProfileSchema } from "@project-phatter/validation";
-import { createNotification } from "../notifications/notifications.db.js";
 
 export const getUserProfile = async (req: Request, res: Response) => {
   try {
@@ -71,7 +70,7 @@ export const getUserProfile = async (req: Request, res: Response) => {
 
     res.json({
       status: "success",
-      profile: {
+      user: {
         id: user.id,
         username: user.username,
         bio: user.bio,
@@ -80,10 +79,10 @@ export const getUserProfile = async (req: Request, res: Response) => {
         createdAt: user.createdAt,
         followersCount: followers.length,
         followingCount: following.length,
+        postsCount: posts.length,
         isFollowing,
-        isSelf: currentUserId ? String(currentUserId) === String(user.id) : false,
+        isSelf: Boolean(currentUserId && currentUserId === user.id),
       },
-      postCount: enrichedPosts.length,
       posts: enrichedPosts,
     });
   } catch (error) {
@@ -103,27 +102,28 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    // Validate body with shared schema
     const parseResult = UserProfileSchema.safeParse(req.body);
     if (!parseResult.success) {
-      const errorMessage = parseResult.error.issues?.[0]?.message || "Invalid profile data";
-      return res.status(400).json({ error: errorMessage });
+      const errorMsg = parseResult.error.issues[0]?.message || "Invalid input data";
+      return res.status(400).json({ error: errorMsg });
     }
 
     const { bio, profilePictureUrl } = parseResult.data;
 
-    const updatePayload: Record<string, any> = {};
-    if (bio !== undefined) updatePayload.bio = bio;
-    if (profilePictureUrl !== undefined) updatePayload.profilePictureUrl = profilePictureUrl;
+    const updateData: { bio?: string; profilePictureUrl?: string } = {};
+    if (bio !== undefined) updateData.bio = bio;
+    if (profilePictureUrl !== undefined) updateData.profilePictureUrl = profilePictureUrl;
 
-    if (Object.keys(updatePayload).length > 0) {
-      await db.orm.public.User?.where({ id: currentUserId }).update(updatePayload);
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: "No fields provided to update" });
     }
 
+    await db.orm.public.User?.where({ id: currentUserId }).update(updateData);
     const updatedUser = await db.orm.public.User?.where({ id: currentUserId }).first();
 
     res.json({
       status: "success",
+      message: "Profile updated successfully",
       user: {
         id: updatedUser?.id,
         username: updatedUser?.username,
@@ -135,95 +135,6 @@ export const updateUserProfile = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Update User Profile Error:", error);
     res.status(500).json({ error: "Failed to update user profile" });
-  }
-};
-
-export const followUser = async (req: Request, res: Response) => {
-  try {
-    const { username } = req.params;
-    const currentUserId =
-      (req as any).user?.userId ||
-      (req as any).user?.id ||
-      (req as any).user?.sub;
-
-    if (!currentUserId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
-    const targetUser = await db.orm.public.User?.where({ username }).first();
-    if (!targetUser) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    if (String(targetUser.id) === String(currentUserId)) {
-      return res.status(400).json({ error: "You cannot follow yourself" });
-    }
-
-    // Check if already following
-    const existing = await db.orm.public.Follows?.where({
-      followerId: currentUserId,
-      followingId: targetUser.id,
-    }).first();
-
-    if (!existing) {
-      await db.orm.public.Follows?.create({
-        followerId: currentUserId,
-        followingId: targetUser.id,
-      });
-
-      // Trigger real-time notification
-      try {
-        await createNotification({
-          recipientId: targetUser.id,
-          actorId: currentUserId,
-          type: "follow",
-        });
-      } catch (notifErr) {
-        console.error("Failed to send follow notification:", notifErr);
-      }
-    }
-
-    res.json({
-      status: "success",
-      message: `Now following @${username}`,
-      isFollowing: true,
-    });
-  } catch (error) {
-    console.error("Follow User Error:", error);
-    res.status(500).json({ error: "Failed to follow user" });
-  }
-};
-
-export const unfollowUser = async (req: Request, res: Response) => {
-  try {
-    const { username } = req.params;
-    const currentUserId =
-      (req as any).user?.userId ||
-      (req as any).user?.id ||
-      (req as any).user?.sub;
-
-    if (!currentUserId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
-    const targetUser = await db.orm.public.User?.where({ username }).first();
-    if (!targetUser) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    await db.orm.public.Follows?.where({
-      followerId: currentUserId,
-      followingId: targetUser.id,
-    }).delete();
-
-    res.json({
-      status: "success",
-      message: `Unfollowed @${username}`,
-      isFollowing: false,
-    });
-  } catch (error) {
-    console.error("Unfollow User Error:", error);
-    res.status(500).json({ error: "Failed to unfollow user" });
   }
 };
 
@@ -243,23 +154,23 @@ export const getUsersDirectory = async (req: Request, res: Response) => {
     if (search && typeof search === "string" && search.trim()) {
       const q = search.trim().toLowerCase();
       users = users.filter((u: any) => {
-        const usernameMatch = u.username && u.username.toLowerCase().includes(q);
-        const bioMatch = u.bio && u.bio.toLowerCase().includes(q);
+        const usernameMatch = u.username?.toLowerCase().includes(q);
+        const bioMatch = u.bio?.toLowerCase().includes(q);
         return usernameMatch || bioMatch;
       });
     }
 
-    // 2. Fetch current user's followings if logged in
+    // Current user's followings to check isFollowing status
     const currentUserFollowings = currentUserId
       ? (await db.orm.public.Follows?.where({ followerId: currentUserId }).all()) || []
       : [];
     const followingSet = new Set(currentUserFollowings.map((f: any) => String(f.followingId)));
 
-    // 3. Enrich each user with follower count, following count, post count, and follow state
+    // 2. Enrich users with follower counts, post counts, and following status
     const enrichedUsers = await Promise.all(
       users.map(async (u: any) => {
         const followers = (await db.orm.public.Follows?.where({ followingId: u.id }).all()) || [];
-        const followings = (await db.orm.public.Follows?.where({ followerId: u.id }).all()) || [];
+        const following = (await db.orm.public.Follows?.where({ followerId: u.id }).all()) || [];
         const posts = (await db.orm.public.Post?.where({ authorId: u.id }).all()) || [];
 
         return {
@@ -270,7 +181,7 @@ export const getUsersDirectory = async (req: Request, res: Response) => {
           isGuestSandbox: u.isGuestSandbox,
           createdAt: u.createdAt,
           followersCount: followers.length,
-          followingCount: followings.length,
+          followingCount: following.length,
           postsCount: posts.length,
           isFollowing: followingSet.has(String(u.id)),
           isSelf: Boolean(currentUserId && String(u.id) === String(currentUserId)),
@@ -278,20 +189,30 @@ export const getUsersDirectory = async (req: Request, res: Response) => {
       })
     );
 
-    // 4. Handle "suggestions" filter ("Who to Follow")
-    if (filter === "suggestions" && currentUserId) {
-      const suggestions = enrichedUsers
-        .filter((u) => !u.isSelf && !u.isFollowing)
-        .sort((a, b) => b.followersCount - a.followersCount);
-      return res.json({ status: "success", users: suggestions });
+    // 3. Apply tab filter
+    if (filter === "following" && currentUserId) {
+      const filtered = enrichedUsers.filter((u) => u.isFollowing);
+      return res.json({
+        status: "success",
+        users: filtered,
+      });
     }
 
-    // Handle "following" filter (users followed by current user)
-    if (filter === "following" && currentUserId) {
-      const followingList = enrichedUsers
-        .filter((u) => u.isFollowing)
-        .sort((a, b) => b.followersCount - a.followersCount);
-      return res.json({ status: "success", users: followingList });
+    if ((filter === "suggestions" || filter === "suggested") && currentUserId) {
+      // Show users that current user is NOT following (excluding self)
+      const suggestions = enrichedUsers
+        .filter((u) => !u.isSelf && !u.isFollowing)
+        .sort((a, b) => {
+          if (a.isGuestSandbox !== b.isGuestSandbox) {
+            return a.isGuestSandbox ? 1 : -1;
+          }
+          return b.followersCount - a.followersCount;
+        });
+
+      return res.json({
+        status: "success",
+        users: suggestions,
+      });
     }
 
     // Default ("all"): Sort real users first, then by followersCount descending
@@ -309,123 +230,5 @@ export const getUsersDirectory = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Get Users Directory Error:", error);
     res.status(500).json({ error: "Failed to fetch user directory" });
-  }
-};
-
-export const getUserFollowers = async (req: Request, res: Response) => {
-  try {
-    const { username } = req.params;
-    const currentUserId =
-      (req as any).user?.userId ||
-      (req as any).user?.id ||
-      (req as any).user?.sub;
-
-    const user = await db.orm.public.User?.where({ username }).first();
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    // Records where this user is being followed (followingId = user.id)
-    const followRecords = (await db.orm.public.Follows?.where({ followingId: user.id }).all()) || [];
-
-    // Current user's followings to check isFollowing status
-    const currentUserFollowings = currentUserId
-      ? (await db.orm.public.Follows?.where({ followerId: currentUserId }).all()) || []
-      : [];
-    const followingSet = new Set(currentUserFollowings.map((f: any) => String(f.followingId)));
-
-    const followers = await Promise.all(
-      followRecords.map(async (f: any) => {
-        const followerUser = await db.orm.public.User?.where({ id: f.followerId }).first();
-        if (!followerUser) return null;
-
-        const subFollowers = (await db.orm.public.Follows?.where({ followingId: followerUser.id }).all()) || [];
-        const subFollowings = (await db.orm.public.Follows?.where({ followerId: followerUser.id }).all()) || [];
-        const posts = (await db.orm.public.Post?.where({ authorId: followerUser.id }).all()) || [];
-
-        return {
-          id: followerUser.id,
-          username: followerUser.username,
-          profilePictureUrl: followerUser.profilePictureUrl,
-          bio: followerUser.bio,
-          isGuestSandbox: followerUser.isGuestSandbox,
-          createdAt: followerUser.createdAt,
-          followersCount: subFollowers.length,
-          followingCount: subFollowings.length,
-          postsCount: posts.length,
-          isFollowing: followingSet.has(String(followerUser.id)),
-          isSelf: Boolean(currentUserId && String(followerUser.id) === String(currentUserId)),
-        };
-      })
-    );
-
-    const validFollowers = followers.filter(Boolean);
-
-    res.json({
-      status: "success",
-      users: validFollowers,
-    });
-  } catch (error) {
-    console.error("Get User Followers Error:", error);
-    res.status(500).json({ error: "Failed to fetch followers" });
-  }
-};
-
-export const getUserFollowing = async (req: Request, res: Response) => {
-  try {
-    const { username } = req.params;
-    const currentUserId =
-      (req as any).user?.userId ||
-      (req as any).user?.id ||
-      (req as any).user?.sub;
-
-    const user = await db.orm.public.User?.where({ username }).first();
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    // Records where this user is the follower (followerId = user.id)
-    const followRecords = (await db.orm.public.Follows?.where({ followerId: user.id }).all()) || [];
-
-    // Current user's followings to check isFollowing status
-    const currentUserFollowings = currentUserId
-      ? (await db.orm.public.Follows?.where({ followerId: currentUserId }).all()) || []
-      : [];
-    const followingSet = new Set(currentUserFollowings.map((f: any) => String(f.followingId)));
-
-    const followings = await Promise.all(
-      followRecords.map(async (f: any) => {
-        const followedUser = await db.orm.public.User?.where({ id: f.followingId }).first();
-        if (!followedUser) return null;
-
-        const subFollowers = (await db.orm.public.Follows?.where({ followingId: followedUser.id }).all()) || [];
-        const subFollowings = (await db.orm.public.Follows?.where({ followerId: followedUser.id }).all()) || [];
-        const posts = (await db.orm.public.Post?.where({ authorId: followedUser.id }).all()) || [];
-
-        return {
-          id: followedUser.id,
-          username: followedUser.username,
-          profilePictureUrl: followedUser.profilePictureUrl,
-          bio: followedUser.bio,
-          isGuestSandbox: followedUser.isGuestSandbox,
-          createdAt: followedUser.createdAt,
-          followersCount: subFollowers.length,
-          followingCount: subFollowings.length,
-          postsCount: posts.length,
-          isFollowing: followingSet.has(String(followedUser.id)),
-          isSelf: Boolean(currentUserId && String(followedUser.id) === String(currentUserId)),
-        };
-      })
-    );
-
-    const validFollowings = followings.filter(Boolean);
-
-    res.json({
-      status: "success",
-      users: validFollowings,
-    });
-  } catch (error) {
-    console.error("Get User Following Error:", error);
-    res.status(500).json({ error: "Failed to fetch following" });
   }
 };

@@ -3,7 +3,7 @@ import { api } from "../../../lib/api";
 import type { Post, UserProfile } from "../../posts/types/types";
 import { PostCard } from "../../posts/components/PostCard";
 import { EditProfileModal } from "./EditProfileModal";
-import { FollowListModal } from "./FollowListModal";
+import { FollowListModal } from "../../follows/components/FollowListModal";
 import { Spinner } from "../../../components/common/Spinner";
 import { ArrowLeft, Calendar, MessageSquare } from "lucide-react";
 import styles from "./ProfileView.module.css";
