@@ -1,10 +1,12 @@
 import type { Request, Response, NextFunction } from "express";
 import { jwtConfig } from "../config/jwt.config.js";
-import { verifyAuthToken } from "../utils/jwt.util.js";
+import { verifyAccessToken } from "../utils/jwt.util.js";
 
 export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+  // Read the short-lived access_token cookie, or fall back to Authorization header
+  // (Header fallback is useful for mobile / API clients that don't use cookies)
   const token =
-    req.cookies?.[jwtConfig.cookieName] ||
+    req.cookies?.[jwtConfig.accessCookieName] ||
     req.headers.authorization?.replace(/^Bearer\s+/, "");
 
   if (!token) {
@@ -12,22 +14,23 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
   }
 
   try {
-    const decoded = verifyAuthToken(token);
+    const decoded = verifyAccessToken(token);
     req.user = decoded;
     next();
   } catch {
-    return res.status(401).json({ error: "Invalid or expired session token" });
+    // Token is expired or invalid → client should call POST /api/auth/refresh
+    return res.status(401).json({ error: "Access token expired or invalid" });
   }
 };
 
 export const optionalAuth = (req: Request, _res: Response, next: NextFunction) => {
   try {
     const token =
-      req.cookies?.[jwtConfig.cookieName] ||
+      req.cookies?.[jwtConfig.accessCookieName] ||
       req.headers.authorization?.replace(/^Bearer\s+/, "");
 
     if (token) {
-      const decoded = verifyAuthToken(token);
+      const decoded = verifyAccessToken(token);
       req.user = decoded;
     }
   } catch {

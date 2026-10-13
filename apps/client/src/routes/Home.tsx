@@ -1,4 +1,13 @@
 import { useEffect, useState, useCallback } from "react";
+import {
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+  useParams,
+  useSearchParams,
+  useLocation,
+} from "react-router-dom";
 import { api } from "../lib/api";
 import type { Post, CurrentUser } from "../features/posts/types/types";
 import { PostCard } from "../features/posts/components/PostCard";
@@ -16,28 +25,115 @@ import { initOnlineUsersTracker } from "../hooks/useOnlineUsers";
 import { Globe, Users, Clock, Flame, History } from "lucide-react";
 import styles from "./Home.module.css";
 
-
 interface HomeProps {
   currentUser: CurrentUser | string | null;
   onLogout: () => void;
   onProfileUpdated?: () => void;
 }
 
+// ─── Route Helper Components ──────────────────────────────────────────────────
+
+const ProfileRoute = ({
+  currentUsername,
+  currentUserAvatar,
+  onProfileUpdated,
+}: {
+  currentUsername: string | null;
+  currentUserAvatar?: string | null;
+  onProfileUpdated?: () => void;
+}) => {
+  const { username } = useParams<{ username: string }>();
+  const navigate = useNavigate();
+
+  if (!username) return <Navigate to="/" replace />;
+
+  return (
+    <ProfileView
+      username={username}
+      currentUser={currentUsername}
+      currentUserAvatar={currentUserAvatar}
+      onBack={() => navigate(-1)}
+      onRequireLogin={() => {}}
+      onOpenProfile={(u) => navigate(`/profile/${u}`)}
+      onSelectHashtag={(t) => navigate(`/hashtags/${encodeURIComponent(t.replace(/^#/, ""))}`)}
+      onStartChat={(partner) => navigate(`/messages/${encodeURIComponent(partner.username)}`)}
+      onProfileUpdated={onProfileUpdated}
+    />
+  );
+};
+
+const HashtagsRoute = ({
+  currentUser,
+  currentUserAvatar,
+}: {
+  currentUser: string | null;
+  currentUserAvatar?: string | null;
+}) => {
+  const { tag } = useParams<{ tag: string }>();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  const selectedTag = tag ? `#${tag}` : searchParams.get("tag");
+
+  return (
+    <HashtagsExplore
+      initialTag={selectedTag}
+      currentUser={currentUser}
+      currentUserAvatar={currentUserAvatar}
+      onBackToTimeline={() => navigate("/")}
+      onOpenProfile={(u) => navigate(`/profile/${u}`)}
+      onRequireLogin={() => {}}
+    />
+  );
+};
+
+const MessagesRoute = ({
+  currentUser,
+  currentUserAvatar,
+  onRefreshUnreadCount,
+}: {
+  currentUser: any;
+  currentUserAvatar?: string | null;
+  onRefreshUnreadCount?: () => void;
+}) => {
+  const { partnerUsername } = useParams<{ partnerUsername: string }>();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  const targetUser = partnerUsername || searchParams.get("user");
+  const initialPartner = targetUser ? ({ username: targetUser } as any) : null;
+
+  return (
+    <MessagesView
+      currentUser={currentUser}
+      currentUserAvatar={currentUserAvatar}
+      initialPartner={initialPartner}
+      onOpenProfile={(u) => navigate(`/profile/${u}`)}
+      onRequireLogin={() => {}}
+      onRefreshUnreadCount={onRefreshUnreadCount}
+    />
+  );
+};
+
+// ─── Main Home Component ──────────────────────────────────────────────────────
+
 export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const currentUsername =
     typeof currentUser === "string" ? currentUser : currentUser?.username || null;
   const currentUserAvatar =
     typeof currentUser === "object" ? currentUser?.profilePictureUrl : null;
+
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentView, setCurrentView] = useState<"timeline" | "directory" | "hashtags" | "messages" | "bookmarks" | "notifications">("timeline");
-  const [selectedHashtag, setSelectedHashtag] = useState<string | null>(null);
-  const [messagingPartner, setMessagingPartner] = useState<any | null>(null);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState<number>(0);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number>(0);
   const [activeFeed, setActiveFeed] = useState<"for-you" | "following">("for-you");
   const [activeSort, setActiveSort] = useState<"latest" | "popular" | "oldest">("latest");
-  const [viewingProfile, setViewingProfile] = useState<string | null>(null);
+
+  const isTimeline = location.pathname === "/" || location.pathname === "/home";
 
   const fetchUnreadCount = useCallback(async () => {
     try {
@@ -85,18 +181,6 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
     };
   }, [fetchUnreadCount, fetchUnreadNotificationsCount]);
 
-  const handleSelectHashtag = (tag: string) => {
-    setViewingProfile(null);
-    setSelectedHashtag(tag);
-    setCurrentView("hashtags");
-  };
-
-  const handleStartChat = (partner: any) => {
-    setViewingProfile(null);
-    setMessagingPartner(partner);
-    setCurrentView("messages");
-  };
-
   const fetchFeed = useCallback(async () => {
     try {
       setLoading(true);
@@ -116,196 +200,225 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
   }, [activeFeed, activeSort]);
 
   useEffect(() => {
-    if (!viewingProfile && currentView === "timeline") {
+    if (isTimeline) {
       fetchFeed();
     }
-  }, [fetchFeed, viewingProfile, currentView]);
+  }, [fetchFeed, isTimeline]);
 
   return (
     <MainLayout
       currentUser={currentUsername}
       currentUserAvatar={currentUserAvatar}
-      activeView={viewingProfile ? "profile" : currentView}
       onLogout={onLogout}
-      onOpenProfile={(u) => setViewingProfile(u)}
-      onGoHome={() => {
-        setViewingProfile(null);
-        setSelectedHashtag(null);
-        setCurrentView("timeline");
-      }}
-      onOpenDirectory={() => {
-        setViewingProfile(null);
-        setCurrentView("directory");
-      }}
-      onOpenHashtags={() => {
-        setViewingProfile(null);
-        setSelectedHashtag(null);
-        setCurrentView("hashtags");
-      }}
-      onOpenMessages={() => {
-        setViewingProfile(null);
-        setCurrentView("messages");
-      }}
-      onOpenBookmarks={() => {
-        setViewingProfile(null);
-        setCurrentView("bookmarks");
-      }}
-      onOpenNotifications={() => {
-        setViewingProfile(null);
-        setCurrentView("notifications");
-      }}
       unreadMessagesCount={unreadMessagesCount}
       unreadNotificationsCount={unreadNotificationsCount}
     >
-      {viewingProfile ? (
-        <ProfileView
-          username={viewingProfile}
-          currentUser={currentUsername}
-          currentUserAvatar={currentUserAvatar}
-          onBack={() => setViewingProfile(null)}
-          onRequireLogin={() => {}}
-          onOpenProfile={(u) => setViewingProfile(u)}
-          onSelectHashtag={handleSelectHashtag}
-          onStartChat={handleStartChat}
-          onProfileUpdated={() => {
-            onProfileUpdated?.();
-            fetchFeed();
-          }}
-        />
-      ) : currentView === "notifications" ? (
-        <NotificationsView
-          currentUser={currentUsername}
-          onOpenProfile={(u) => setViewingProfile(u)}
-          onRefreshUnreadCount={fetchUnreadNotificationsCount}
-        />
-      ) : currentView === "directory" ? (
-        <UserDirectory
-          currentUser={currentUsername}
-          onOpenProfile={(u) => setViewingProfile(u)}
-          onBackToTimeline={() => setCurrentView("timeline")}
-          onRequireLogin={() => {}}
-        />
-      ) : currentView === "hashtags" ? (
-        <HashtagsExplore
-          initialTag={selectedHashtag}
-          currentUser={currentUsername}
-          currentUserAvatar={currentUserAvatar}
-          onBackToTimeline={() => {
-            setSelectedHashtag(null);
-            setCurrentView("timeline");
-          }}
-          onOpenProfile={(u) => setViewingProfile(u)}
-          onRequireLogin={() => {}}
-        />
-      ) : currentView === "messages" ? (
-        <MessagesView
-          currentUser={currentUser}
-          currentUserAvatar={currentUserAvatar}
-          initialPartner={messagingPartner}
-          onOpenProfile={(u) => setViewingProfile(u)}
-          onRequireLogin={() => {}}
-          onRefreshUnreadCount={fetchUnreadCount}
-        />
-      ) : currentView === "bookmarks" ? (
-        <BookmarksView
-          currentUser={currentUsername}
-          currentUserAvatar={currentUserAvatar}
-          onOpenProfile={(u) => setViewingProfile(u)}
-          onSelectHashtag={handleSelectHashtag}
-          onBackToTimeline={() => setCurrentView("timeline")}
-          onRequireLogin={() => {}}
-        />
-      ) : (
+      <Routes>
+        {/* Home Feed */}
+        <Route
+          path="/"
+          element={
+            <>
+              <header className={styles.feedHeader}>
+                <h2 className={styles.pageTitle}>Home Feed</h2>
 
+                <div className={styles.realmTabs}>
+                  <button
+                    className={`${styles.realmTab} ${
+                      activeFeed === "for-you" ? styles.activeRealmTab : ""
+                    }`}
+                    onClick={() => setActiveFeed("for-you")}
+                  >
+                    <Globe size={16} />
+                    <span>For you</span>
+                  </button>
+                  <button
+                    className={`${styles.realmTab} ${
+                      activeFeed === "following" ? styles.activeRealmTab : ""
+                    }`}
+                    onClick={() => setActiveFeed("following")}
+                  >
+                    <Users size={16} />
+                    <span>Following</span>
+                  </button>
+                </div>
 
-        <>
-          <header className={styles.feedHeader}>
-            <h2 className={styles.pageTitle}>Home Feed</h2>
+                <div className={styles.filterPills}>
+                  <button
+                    className={`${styles.filterPill} ${
+                      activeSort === "latest" ? styles.activeFilterPill : ""
+                    }`}
+                    onClick={() => setActiveSort("latest")}
+                  >
+                    <Clock size={14} />
+                    <span>Latest</span>
+                  </button>
+                  <button
+                    className={`${styles.filterPill} ${
+                      activeSort === "popular" ? styles.activeFilterPill : ""
+                    }`}
+                    onClick={() => setActiveSort("popular")}
+                  >
+                    <Flame size={14} />
+                    <span>Popular</span>
+                  </button>
+                  <button
+                    className={`${styles.filterPill} ${
+                      activeSort === "oldest" ? styles.activeFilterPill : ""
+                    }`}
+                    onClick={() => setActiveSort("oldest")}
+                  >
+                    <History size={14} />
+                    <span>Oldest</span>
+                  </button>
+                </div>
+              </header>
 
-            <div className={styles.realmTabs}>
-              <button
-                className={`${styles.realmTab} ${
-                  activeFeed === "for-you" ? styles.activeRealmTab : ""
-                }`}
-                onClick={() => setActiveFeed("for-you")}
-              >
-                <Globe size={16} />
-                <span>For you</span>
-              </button>
-              <button
-                className={`${styles.realmTab} ${
-                  activeFeed === "following" ? styles.activeRealmTab : ""
-                }`}
-                onClick={() => setActiveFeed("following")}
-              >
-                <Users size={16} />
-                <span>Following</span>
-              </button>
-            </div>
-
-            <div className={styles.filterPills}>
-              <button
-                className={`${styles.filterPill} ${
-                  activeSort === "latest" ? styles.activeFilterPill : ""
-                }`}
-                onClick={() => setActiveSort("latest")}
-              >
-                <Clock size={14} />
-                <span>Latest</span>
-              </button>
-              <button
-                className={`${styles.filterPill} ${
-                  activeSort === "popular" ? styles.activeFilterPill : ""
-                }`}
-                onClick={() => setActiveSort("popular")}
-              >
-                <Flame size={14} />
-                <span>Popular</span>
-              </button>
-              <button
-                className={`${styles.filterPill} ${
-                  activeSort === "oldest" ? styles.activeFilterPill : ""
-                }`}
-                onClick={() => setActiveSort("oldest")}
-              >
-                <History size={14} />
-                <span>Oldest</span>
-              </button>
-            </div>
-          </header>
-
-          <CreatePost
-            currentUser={currentUsername}
-            currentUserAvatar={currentUserAvatar}
-            onPostCreated={fetchFeed}
-          />
-
-          {loading ? (
-            <Spinner size={32} />
-          ) : posts.length === 0 ? (
-            <div className={styles.statusContainer}>
-              {activeFeed === "following"
-                ? "No posts from accounts you follow yet. Follow other users to see their posts here!"
-                : "No posts to show yet."}
-            </div>
-          ) : (
-            posts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
+              <CreatePost
                 currentUser={currentUsername}
                 currentUserAvatar={currentUserAvatar}
-                onRequireLogin={() => {}}
-                onPostUpdated={fetchFeed}
-                onPostDeleted={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))}
-                onOpenProfile={(u) => setViewingProfile(u)}
-                onSelectHashtag={handleSelectHashtag}
+                onPostCreated={fetchFeed}
               />
 
-            ))
-          )}
-        </>
-      )}
+              {loading ? (
+                <Spinner size={32} />
+              ) : posts.length === 0 ? (
+                <div className={styles.statusContainer}>
+                  {activeFeed === "following"
+                    ? "No posts from accounts you follow yet. Follow other users to see their posts here!"
+                    : "No posts to show yet."}
+                </div>
+              ) : (
+                posts.map((post) => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    currentUser={currentUsername}
+                    currentUserAvatar={currentUserAvatar}
+                    onRequireLogin={() => {}}
+                    onPostUpdated={fetchFeed}
+                    onPostDeleted={(id) =>
+                      setPosts((prev) => prev.filter((p) => p.id !== id))
+                    }
+                    onOpenProfile={(u) => navigate(`/profile/${u}`)}
+                    onSelectHashtag={(tag) =>
+                      navigate(
+                        `/hashtags/${encodeURIComponent(tag.replace(/^#/, ""))}`
+                      )
+                    }
+                  />
+                ))
+              )}
+            </>
+          }
+        />
+
+        <Route path="/home" element={<Navigate to="/" replace />} />
+
+        {/* Notifications */}
+        <Route
+          path="/notifications"
+          element={
+            <NotificationsView
+              currentUser={currentUsername}
+              onOpenProfile={(u) => navigate(`/profile/${u}`)}
+              onRefreshUnreadCount={fetchUnreadNotificationsCount}
+            />
+          }
+        />
+
+        {/* Hashtags Explore */}
+        <Route
+          path="/hashtags"
+          element={
+            <HashtagsRoute
+              currentUser={currentUsername}
+              currentUserAvatar={currentUserAvatar}
+            />
+          }
+        />
+        <Route
+          path="/hashtags/:tag"
+          element={
+            <HashtagsRoute
+              currentUser={currentUsername}
+              currentUserAvatar={currentUserAvatar}
+            />
+          }
+        />
+
+        {/* Messages */}
+        <Route
+          path="/messages"
+          element={
+            <MessagesRoute
+              currentUser={currentUser}
+              currentUserAvatar={currentUserAvatar}
+              onRefreshUnreadCount={fetchUnreadCount}
+            />
+          }
+        />
+        <Route
+          path="/messages/:partnerUsername"
+          element={
+            <MessagesRoute
+              currentUser={currentUser}
+              currentUserAvatar={currentUserAvatar}
+              onRefreshUnreadCount={fetchUnreadCount}
+            />
+          }
+        />
+
+        {/* Bookmarks */}
+        <Route
+          path="/bookmarks"
+          element={
+            <BookmarksView
+              currentUser={currentUsername}
+              currentUserAvatar={currentUserAvatar}
+              onOpenProfile={(u) => navigate(`/profile/${u}`)}
+              onSelectHashtag={(tag) =>
+                navigate(
+                  `/hashtags/${encodeURIComponent(tag.replace(/^#/, ""))}`
+                )
+              }
+              onBackToTimeline={() => navigate("/")}
+              onRequireLogin={() => {}}
+            />
+          }
+        />
+
+        {/* User Directory */}
+        <Route
+          path="/directory"
+          element={
+            <UserDirectory
+              currentUser={currentUsername}
+              onOpenProfile={(u) => navigate(`/profile/${u}`)}
+              onBackToTimeline={() => navigate("/")}
+              onRequireLogin={() => {}}
+            />
+          }
+        />
+
+        {/* User Profiles */}
+        <Route
+          path="/profile/:username"
+          element={
+            <ProfileRoute
+              currentUsername={currentUsername}
+              currentUserAvatar={currentUserAvatar}
+              onProfileUpdated={() => {
+                onProfileUpdated?.();
+                fetchFeed();
+              }}
+            />
+          }
+        />
+
+        {/* Catch-all */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </MainLayout>
   );
 };

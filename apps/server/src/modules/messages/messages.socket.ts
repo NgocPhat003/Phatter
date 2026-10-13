@@ -71,7 +71,8 @@ export function setupSocketServer(httpServer: HTTPServer): SocketIOServer {
       const rawCookies = socket.handshake.headers.cookie;
       const cookies = parseCookies(rawCookies);
       const token =
-        cookies[jwtConfig.cookieName] ||
+        cookies[jwtConfig.accessCookieName] ||
+        cookies["jwt"] ||
         socket.handshake.auth?.token ||
         (socket.handshake.headers.authorization?.replace(/^Bearer\s+/, ""));
 

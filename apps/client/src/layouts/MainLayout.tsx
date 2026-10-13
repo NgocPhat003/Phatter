@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Feather,
   Compass,
@@ -34,7 +35,7 @@ export const MainLayout = ({
   children,
   currentUser,
   currentUserAvatar,
-  activeView = "timeline",
+  activeView,
   unreadMessagesCount = 0,
   unreadNotificationsCount = 0,
   onLogout,
@@ -46,6 +47,29 @@ export const MainLayout = ({
   onOpenBookmarks,
   onOpenNotifications,
 }: MainLayoutProps) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const pathname = location.pathname;
+
+  const currentActiveView =
+    activeView !== undefined
+      ? activeView
+      : pathname === "/" || pathname === "/home"
+      ? "timeline"
+      : pathname.startsWith("/notifications")
+      ? "notifications"
+      : pathname.startsWith("/hashtags")
+      ? "hashtags"
+      : pathname.startsWith("/messages")
+      ? "messages"
+      : pathname.startsWith("/bookmarks")
+      ? "bookmarks"
+      : pathname.startsWith("/directory")
+      ? "directory"
+      : pathname.startsWith("/profile")
+      ? "profile"
+      : "timeline";
+
   return (
     <div className={styles.layoutContainer}>
       <aside className={styles.sidebar}>
@@ -53,7 +77,7 @@ export const MainLayout = ({
           <div
             className={styles.brand}
             title="Phatter"
-            onClick={onGoHome}
+            onClick={() => (onGoHome ? onGoHome() : navigate("/"))}
             style={{ cursor: "pointer" }}
           >
             <Feather size={24} />
@@ -63,20 +87,20 @@ export const MainLayout = ({
           <nav className={styles.navLinks}>
             <button
               className={`${styles.navItem} ${
-                activeView === "timeline" ? styles.activeNavItem : ""
+                currentActiveView === "timeline" ? styles.activeNavItem : ""
               }`}
               title="Timeline"
-              onClick={onGoHome}
+              onClick={() => (onGoHome ? onGoHome() : navigate("/"))}
             >
               <Compass size={20} />
               <span className={styles.navLabel}>Timeline</span>
             </button>
             <button
               className={`${styles.navItem} ${
-                activeView === "notifications" ? styles.activeNavItem : ""
+                currentActiveView === "notifications" ? styles.activeNavItem : ""
               }`}
               title="Notifications"
-              onClick={onOpenNotifications}
+              onClick={() => (onOpenNotifications ? onOpenNotifications() : navigate("/notifications"))}
             >
               <div className={styles.navIconWrapper}>
                 <Bell size={20} />
@@ -90,10 +114,10 @@ export const MainLayout = ({
             </button>
             <button
               className={`${styles.navItem} ${
-                activeView === "hashtags" ? styles.activeNavItem : ""
+                currentActiveView === "hashtags" ? styles.activeNavItem : ""
               }`}
               title="Hashtags"
-              onClick={onOpenHashtags}
+              onClick={() => (onOpenHashtags ? onOpenHashtags() : navigate("/hashtags"))}
             >
               <Hash size={20} />
               <span className={styles.navLabel}>Hashtags</span>
@@ -101,10 +125,10 @@ export const MainLayout = ({
 
             <button
               className={`${styles.navItem} ${
-                activeView === "messages" ? styles.activeNavItem : ""
+                currentActiveView === "messages" ? styles.activeNavItem : ""
               }`}
               title="Messages"
-              onClick={onOpenMessages}
+              onClick={() => (onOpenMessages ? onOpenMessages() : navigate("/messages"))}
             >
               <div className={styles.navIconWrapper}>
                 <MessageSquare size={20} />
@@ -118,20 +142,20 @@ export const MainLayout = ({
             </button>
             <button
               className={`${styles.navItem} ${
-                activeView === "bookmarks" ? styles.activeNavItem : ""
+                currentActiveView === "bookmarks" ? styles.activeNavItem : ""
               }`}
               title="Bookmarks"
-              onClick={onOpenBookmarks}
+              onClick={() => (onOpenBookmarks ? onOpenBookmarks() : navigate("/bookmarks"))}
             >
               <Bookmark size={20} />
               <span className={styles.navLabel}>Bookmarks</span>
             </button>
             <button
               className={`${styles.navItem} ${
-                activeView === "directory" ? styles.activeNavItem : ""
+                currentActiveView === "directory" ? styles.activeNavItem : ""
               }`}
               title="Directory"
-              onClick={onOpenDirectory}
+              onClick={() => (onOpenDirectory ? onOpenDirectory() : navigate("/directory"))}
             >
               <Users size={20} />
               <span className={styles.navLabel}>Directory</span>
@@ -162,7 +186,7 @@ export const MainLayout = ({
             <div
               className={styles.userCard}
               title={`View @${currentUser}'s profile`}
-              onClick={() => onOpenProfile?.(currentUser)}
+              onClick={() => (onOpenProfile ? onOpenProfile(currentUser) : navigate(`/profile/${currentUser}`))}
               style={{ cursor: "pointer" }}
             >
               <div className={styles.userInitialAvatar}>
@@ -185,7 +209,7 @@ export const MainLayout = ({
       <div className={styles.contentWrapper}>
         <main
           className={`${styles.mainFeedArea} ${
-            activeView === "messages" ? styles.messagesArea : ""
+            currentActiveView === "messages" ? styles.messagesArea : ""
           }`}
         >
           {children}

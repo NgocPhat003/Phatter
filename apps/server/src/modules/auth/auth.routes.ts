@@ -5,6 +5,7 @@ import {
   logout,
   login,
   register,
+  refreshToken,
   initiateGithubAuth,
   handleGithubCallback,
   initiateGoogleAuth,
@@ -21,6 +22,11 @@ router.post("/guest", createGuestSession);
 // Standard Login & Register
 router.post("/login", login);
 router.post("/register", register);
+
+// 🔑 Dual-Token: Silent refresh endpoint
+// Called by the Axios interceptor when any API call returns 401.
+// Does NOT use requireAuth — access token is expired by definition when this is hit.
+router.post("/refresh", refreshToken);
 
 // GitHub OAuth
 router.get("/github", initiateGithubAuth);

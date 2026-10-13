@@ -2,7 +2,8 @@ import type { Request, Response } from "express";
 import { db } from "phatter-db";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
-import { signAuthToken } from "../../shared/utils/jwt.util.js";
+import { verifyRefreshToken, hashToken } from "../../shared/utils/jwt.util.js";
+import { issueTokens, clearTokenCookies } from "../../shared/utils/tokens.util.js";
 import { jwtConfig } from "../../shared/config/jwt.config.js";
 import { RegisterSchema, LoginSchema } from "@project-phatter/validation";
 
@@ -35,7 +36,6 @@ export const register = async (req: Request, res: Response) => {
 
     const { username: cleanUsername, email: cleanEmail, password, bio } = parseResult.data;
 
-    // Check if username or email already taken
     const existingUsername = await db.orm.public.User?.where({ username: cleanUsername }).first();
     if (existingUsername) {
       return res.status(400).json({ error: "Username is already taken" });
@@ -46,7 +46,6 @@ export const register = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Email is already registered" });
     }
 
-    // Securely hash password with bcrypt
     const passwordHash = await bcrypt.hash(password, 10);
     const userId = `usr_${crypto.randomBytes(10).toString("hex")}`;
 
@@ -63,12 +62,8 @@ export const register = async (req: Request, res: Response) => {
       return res.status(500).json({ error: "Failed to create account" });
     }
 
-    const token = signAuthToken({
-      userId: newUser.id,
-      isGuestSandbox: false,
-    });
-
-    res.cookie(jwtConfig.cookieName, token, jwtConfig.cookieOptions);
+    // ✅ DUAL-TOKEN: Issue both access + refresh tokens (instead of single session JWT)
+    await issueTokens(res, { userId: newUser.id, isGuestSandbox: false });
 
     res.status(201).json({
       status: "success",
@@ -97,7 +92,6 @@ export const login = async (req: Request, res: Response) => {
 
     const { identifier: clean, password } = parseResult.data;
 
-    // Query user by username or email
     let user = await db.orm.public.User?.where({ username: clean }).first();
     if (!user) {
       user = await db.orm.public.User?.where({ email: clean }).first();
@@ -107,26 +101,18 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Invalid username/email or password" });
     }
 
-    // If account has passwordHash, verify with bcrypt
     if (user.passwordHash) {
       const isMatch = await bcrypt.compare(password, user.passwordHash);
       if (!isMatch) {
-        return res
-          .status(401)
-          .json({ error: "Invalid username/email or password" });
+        return res.status(401).json({ error: "Invalid username/email or password" });
       }
     } else {
-      // Legacy user without a password: set their password now
       const newHash = await bcrypt.hash(password, 10);
       await db.orm.public.User?.where({ id: user.id }).update({ passwordHash: newHash });
     }
 
-    const token = signAuthToken({
-      userId: user.id,
-      isGuestSandbox: user.isGuestSandbox,
-    });
-
-    res.cookie(jwtConfig.cookieName, token, jwtConfig.cookieOptions);
+    // ✅ DUAL-TOKEN: Issue both access + refresh tokens
+    await issueTokens(res, { userId: user.id, isGuestSandbox: user.isGuestSandbox });
 
     res.json({
       status: "success",
@@ -146,6 +132,95 @@ export const login = async (req: Request, res: Response) => {
 };
 
 // ----------------------------------------------------
+// 🔑 REFRESH TOKEN — The Heart of Dual-Token Auth
+// ----------------------------------------------------
+/**
+ * HOW REFRESH TOKEN ROTATION WORKS (Interview-ready explanation):
+ *
+ * 1. Client sends the refresh_token cookie (set at login, scoped to this path only)
+ * 2. We verify its JWT signature
+ * 3. We look up its SHA-256 hash in the DB
+ *    - Not found → token was already used (REUSE DETECTED!) → revoke entire family → force re-login
+ *    - Expired → normal expiry → ask user to log in again
+ *    - Found → proceed
+ * 4. DELETE the old DB record (invalidating the just-used refresh token)
+ * 5. Issue a NEW access token + NEW refresh token (Rotation!)
+ *    - New refresh token inherits the same `family` ID
+ * 6. Save the new refresh token hash to DB
+ *
+ * REUSE DETECTION:
+ * If an attacker steals refresh token A and user refreshes first (getting token B),
+ * the attacker's later attempt to use token A is caught:
+ * - Token A's hash is gone from DB (deleted in step 4)
+ * - We see an unrecognized hash → we know token A was from this family
+ * - We delete ALL tokens in the family → both attacker and user must re-login
+ */
+export const refreshToken = async (req: Request, res: Response) => {
+  const incomingRefreshToken = req.cookies?.[jwtConfig.refreshCookieName];
+
+  if (!incomingRefreshToken) {
+    return res.status(401).json({ error: "No refresh token provided" });
+  }
+
+  try {
+    // Step 1: Verify JWT signature + expiry
+    const payload = verifyRefreshToken(incomingRefreshToken);
+
+    // Step 2: Hash the incoming token and look it up in the DB
+    const tokenHash = hashToken(incomingRefreshToken);
+    const storedToken = await db.orm.public.RefreshToken?.where({ tokenHash }).first();
+
+    if (!storedToken) {
+      /**
+       * 🚨 TOKEN REUSE DETECTED!
+       * This hash is not in the DB, meaning this token was already used (deleted during rotation).
+       * An attacker may have stolen it. Revoke ALL tokens for this user to be safe.
+       */
+      console.warn(`[Security] Refresh token reuse detected for user ${payload.userId}. Revoking all sessions.`);
+
+      try {
+        const allSessions = (await db.orm.public?.RefreshToken?.where({ userId: payload.userId }).all()) || [];
+        await Promise.all(
+          allSessions.map((s: any) => db.orm.public?.RefreshToken?.where({ id: s.id }).delete())
+        );
+      } catch (err) {
+        console.error("Failed to revoke session family:", err);
+      }
+
+      clearTokenCookies(res);
+      return res.status(401).json({ error: "Session compromised. Please log in again." });
+    }
+
+    // Step 3: Check if token is expired in DB (belt-and-suspenders on top of JWT expiry)
+    const expiresAtMs =
+      (storedToken.expiresAt as any)?.epochMilliseconds ??
+      new Date(storedToken.expiresAt as any).getTime();
+    if (Date.now() > expiresAtMs) {
+      await db.orm.public?.RefreshToken?.where({ id: storedToken.id }).delete();
+      clearTokenCookies(res);
+      return res.status(401).json({ error: "Refresh token expired. Please log in again." });
+    }
+
+    // Step 4: Delete the old refresh token (it must NEVER be usable again)
+    const family = storedToken.family;
+    await db.orm.public?.RefreshToken?.where({ id: storedToken.id }).delete();
+
+    // Step 5: Issue fresh access + refresh tokens, passing the same family for rotation tracking
+    await issueTokens(
+      res,
+      { userId: payload.userId, isGuestSandbox: payload.isGuestSandbox },
+      family  // 👈 Keeps the rotation chain in the same family for reuse detection
+    );
+
+    return res.json({ status: "success", message: "Tokens refreshed" });
+  } catch (error: any) {
+    // JWT signature invalid or expired
+    clearTokenCookies(res);
+    return res.status(401).json({ error: "Invalid refresh token. Please log in again." });
+  }
+};
+
+// ----------------------------------------------------
 // GitHub OAuth
 // ----------------------------------------------------
 
@@ -153,7 +228,6 @@ export const initiateGithubAuth = (_req: Request, res: Response) => {
   const clientId = process.env.GITHUB_CLIENT_ID;
   const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
 
-  // If no credentials in .env, seamlessly route to development simulated login
   if (!clientId || clientId === "your_oauth_app_id") {
     return res.redirect(`/api/auth/mock-oauth?provider=github`);
   }
@@ -174,50 +248,32 @@ export const handleGithubCallback = async (req: Request, res: Response) => {
     const clientId = process.env.GITHUB_CLIENT_ID;
     const clientSecret = process.env.GITHUB_CLIENT_SECRET;
 
-    // 1. Exchange code for access token
     const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
       method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        client_id: clientId,
-        client_secret: clientSecret,
-        code,
-      }),
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code }),
     });
 
     const tokenData = await tokenRes.json();
     if (!tokenData.access_token) {
-      console.error("GitHub Token Error:", tokenData);
       return res.redirect(`${clientOrigin}/?auth_error=Failed to retrieve GitHub access token`);
     }
 
-    // 2. Fetch user profile
     const userRes = await fetch("https://api.github.com/user", {
-      headers: {
-        Authorization: `Bearer ${tokenData.access_token}`,
-        "User-Agent": "Phatter-App",
-      },
+      headers: { Authorization: `Bearer ${tokenData.access_token}`, "User-Agent": "Phatter-App" },
     });
     const githubUser = await userRes.json();
 
-    // 3. Resolve user email (fetch emails API if private)
     let email = githubUser.email;
     if (!email) {
       const emailsRes = await fetch("https://api.github.com/user/emails", {
-        headers: {
-          Authorization: `Bearer ${tokenData.access_token}`,
-          "User-Agent": "Phatter-App",
-        },
+        headers: { Authorization: `Bearer ${tokenData.access_token}`, "User-Agent": "Phatter-App" },
       });
       const emails = await emailsRes.json();
       const primary = emails.find((e: any) => e.primary && e.verified);
       email = primary ? primary.email : `${githubUser.login}@users.noreply.github.com`;
     }
 
-    // 4. Find or create user
     let user = await db.orm.public.User?.where({ email: email.toLowerCase() }).first();
     if (!user) {
       const username = await getUniqueUsername(githubUser.login || githubUser.name || "github_user");
@@ -230,13 +286,8 @@ export const handleGithubCallback = async (req: Request, res: Response) => {
       });
     }
 
-    // 5. Sign JWT & set cookie
-    const token = signAuthToken({
-      userId: user.id,
-      isGuestSandbox: false,
-    });
-
-    res.cookie(jwtConfig.cookieName, token, jwtConfig.cookieOptions);
+    // ✅ DUAL-TOKEN
+    await issueTokens(res, { userId: user.id, isGuestSandbox: false });
     res.redirect(clientOrigin);
   } catch (error) {
     console.error("GitHub Auth Callback Error:", error);
@@ -251,7 +302,6 @@ export const handleGithubCallback = async (req: Request, res: Response) => {
 export const initiateGoogleAuth = (_req: Request, res: Response) => {
   const clientId = process.env.GOOGLE_CLIENT_ID;
 
-  // If no credentials in .env, seamlessly route to development simulated login
   if (!clientId || clientId === "your_google_client_id") {
     return res.redirect(`/api/auth/mock-oauth?provider=google`);
   }
@@ -273,7 +323,6 @@ export const handleGoogleCallback = async (req: Request, res: Response) => {
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
     const redirectUri = `http://localhost:3000/api/auth/google/callback`;
 
-    // 1. Exchange code for access token
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -288,19 +337,15 @@ export const handleGoogleCallback = async (req: Request, res: Response) => {
 
     const tokenData = await tokenRes.json();
     if (!tokenData.access_token) {
-      console.error("Google Token Error:", tokenData);
       return res.redirect(`${clientOrigin}/?auth_error=Failed to retrieve Google token`);
     }
 
-    // 2. Fetch Google user info
     const userRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
     const googleUser = await userRes.json();
-
     const email = googleUser.email.toLowerCase();
 
-    // 3. Find or create user
     let user = await db.orm.public.User?.where({ email }).first();
     if (!user) {
       const baseName = googleUser.name?.replace(/\s+/g, "_") || email.split("@")[0];
@@ -314,13 +359,8 @@ export const handleGoogleCallback = async (req: Request, res: Response) => {
       });
     }
 
-    // 4. Sign JWT & set cookie
-    const token = signAuthToken({
-      userId: user.id,
-      isGuestSandbox: false,
-    });
-
-    res.cookie(jwtConfig.cookieName, token, jwtConfig.cookieOptions);
+    // ✅ DUAL-TOKEN
+    await issueTokens(res, { userId: user.id, isGuestSandbox: false });
     res.redirect(clientOrigin);
   } catch (error) {
     console.error("Google Auth Callback Error:", error);
@@ -357,12 +397,8 @@ export const mockOAuthLogin = async (req: Request, res: Response) => {
       });
     }
 
-    const token = signAuthToken({
-      userId: user.id,
-      isGuestSandbox: false,
-    });
-
-    res.cookie(jwtConfig.cookieName, token, jwtConfig.cookieOptions);
+    // ✅ DUAL-TOKEN
+    await issueTokens(res, { userId: user.id, isGuestSandbox: false });
     res.redirect(clientOrigin);
   } catch (error) {
     console.error("Mock OAuth Error:", error);
@@ -386,12 +422,8 @@ export const createGuestSession = async (_req: Request, res: Response) => {
       bio: "Temporary sandbox account",
     });
 
-    const token = signAuthToken({
-      userId: newUser.id,
-      isGuestSandbox: newUser.isGuestSandbox,
-    });
-
-    res.cookie(jwtConfig.cookieName, token, jwtConfig.cookieOptions);
+    // ✅ DUAL-TOKEN
+    await issueTokens(res, { userId: newUser.id, isGuestSandbox: newUser.isGuestSandbox });
 
     res.status(201).json({
       status: "success",
@@ -444,16 +476,22 @@ export const getCurrentUser = async (req: Request, res: Response) => {
   }
 };
 
-export const logout = (_req: Request, res: Response) => {
-  const cookieOptions = {
-    httpOnly: true,
-    sameSite: "lax" as const,
-    secure: process.env.NODE_ENV === "production",
-  };
+export const logout = async (req: Request, res: Response) => {
+  try {
+    // Revoke the refresh token from DB so it can't be used even if someone still has the cookie
+    const incomingRefreshToken = req.cookies?.[jwtConfig.refreshCookieName];
+    if (incomingRefreshToken) {
+      const tokenHash = hashToken(incomingRefreshToken);
+      const tokenRecord = await db.orm.public?.RefreshToken?.where({ tokenHash }).first();
+      if (tokenRecord) {
+        await db.orm.public?.RefreshToken?.where({ id: tokenRecord.id }).delete();
+      }
+    }
+  } catch {
+    // Don't block logout even if DB delete fails
+  }
 
-  res.clearCookie("token", cookieOptions);
-  res.clearCookie("jwt", cookieOptions);
-  res.clearCookie("session", cookieOptions);
+  clearTokenCookies(res);
 
   res.json({
     status: "success",
