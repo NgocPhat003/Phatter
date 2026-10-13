@@ -3,6 +3,7 @@ import { api } from "../../../lib/api";
 import type { Post } from "../types/types";
 import { Heart, MessageCircle, Bookmark, Trash2 } from "lucide-react";
 import { CommentSection } from "./CommentSection";
+import { ConfirmModal } from "../../../components/common/ConfirmModal";
 import styles from "./PostCard.module.css";
 
 interface PostCardProps {
@@ -32,6 +33,7 @@ export const PostCard = ({
   const [isBookmarked, setIsBookmarked] = useState(Boolean(post.engagement.isBookmarked));
   const [isBookmarking, setIsBookmarking] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentsCount, setCommentsCount] = useState(post.engagement.commentsCount);
 
@@ -42,20 +44,20 @@ export const PostCard = ({
         : (currentUser as any)?.username === post.author?.username)
   );
 
-  const handleDeletePost = async (e: React.MouseEvent) => {
+  const handleDeletePost = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!currentUser) {
       onRequireLogin();
       return;
     }
-    if (isDeleting) return;
+    setShowDeleteModal(true);
+  };
 
-    const ok = window.confirm("Are you sure you want to delete this post? This cannot be undone.");
-    if (!ok) return;
-
+  const handleConfirmDelete = async () => {
     try {
       setIsDeleting(true);
       await api.delete(`/posts/${post.id}`);
+      setShowDeleteModal(false);
       onPostDeleted?.(post.id);
     } catch (err: any) {
       console.error("Failed to delete post:", err);
@@ -263,6 +265,17 @@ export const PostCard = ({
           onOpenProfile={onOpenProfile}
         />
       )}
+
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        title="Delete Post"
+        message="Are you sure you want to delete this post? This action cannot be undone."
+        confirmLabel="Delete"
+        danger
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setShowDeleteModal(false)}
+      />
     </article>
   );
 };

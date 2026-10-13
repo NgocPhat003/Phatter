@@ -3,6 +3,7 @@ import { Reply, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import { api } from "../../../lib/api";
 import type { Comment } from "../types/types";
 import { Spinner } from "../../../components/common/Spinner";
+import { ConfirmModal } from "../../../components/common/ConfirmModal";
 import styles from "./CommentSection.module.css";
 
 interface CommentSectionProps {
@@ -44,6 +45,7 @@ const CommentItem = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showReplies, setShowReplies] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const replyInputRef = useRef<HTMLTextAreaElement>(null);
 
   const isAuthor = Boolean(
@@ -75,14 +77,16 @@ const CommentItem = ({
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (isDeleting) return;
-    const ok = window.confirm("Are you sure you want to delete this comment?");
-    if (!ok) return;
+    setShowDeleteModal(true);
+  };
 
+  const handleConfirmDelete = async () => {
     try {
       setIsDeleting(true);
       await onDeleteComment(comment.id);
+      setShowDeleteModal(false);
     } catch {
       setIsDeleting(false);
     }
@@ -281,6 +285,17 @@ const CommentItem = ({
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        title="Delete Comment"
+        message="Are you sure you want to delete this comment? This action cannot be undone."
+        confirmLabel="Delete"
+        danger
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setShowDeleteModal(false)}
+      />
     </div>
   );
 };
