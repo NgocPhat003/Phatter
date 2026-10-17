@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { db } from "phatter-db";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
@@ -26,12 +26,11 @@ const getUniqueUsername = async (desiredName: string): Promise<string> => {
 // Standard Login & Register with Password Security
 // ----------------------------------------------------
 
-export const register = async (req: Request, res: Response) => {
+export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const parseResult = RegisterSchema.safeParse(req.body);
     if (!parseResult.success) {
-      const errorMessage = parseResult.error.issues?.[0]?.message || "Invalid registration data";
-      return res.status(400).json({ error: errorMessage });
+      return next(parseResult.error);
     }
 
     const { username: cleanUsername, email: cleanEmail, password, bio } = parseResult.data;
@@ -82,12 +81,11 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const parseResult = LoginSchema.safeParse(req.body);
     if (!parseResult.success) {
-      const errorMessage = parseResult.error.issues?.[0]?.message || "Invalid credentials format";
-      return res.status(400).json({ error: errorMessage });
+      return next(parseResult.error);
     }
 
     const { identifier: clean, password } = parseResult.data;

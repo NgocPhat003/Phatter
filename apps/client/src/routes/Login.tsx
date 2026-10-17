@@ -1,4 +1,12 @@
 import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  RegisterFormSchema,
+  type RegisterFormDTO,
+  LoginSchema,
+  type LoginInput,
+} from "@project-phatter/validation";
 import { LogIn, UserPlus, ShieldAlert, Loader2, Eye, EyeOff } from "lucide-react";
 import { api } from "../lib/api";
 
@@ -10,14 +18,34 @@ interface LoginProps {
 
 export const Login = ({ onLoginSuccess }: LoginProps) => {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
-  const [identifier, setIdentifier] = useState("");
-  const [password, setPassword] = useState("");
-  const [registerUsername, setRegisterUsername] = useState("");
-  const [registerEmail, setRegisterEmail] = useState("");
-  const [registerPassword, setRegisterPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [guestLoading, setGuestLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Separate, fully-typed React Hook Form instances backed by shared Zod schemas
+  const loginForm = useForm<LoginInput>({
+    resolver: zodResolver(LoginSchema),
+    defaultValues: {
+      identifier: "",
+      password: "",
+    },
+  });
+
+  const registerForm = useForm<RegisterFormDTO>({
+    resolver: zodResolver(RegisterFormSchema),
+    defaultValues: {
+      username: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
+
+  const isSubmitting =
+    loginForm.formState.isSubmitting ||
+    registerForm.formState.isSubmitting ||
+    guestLoading;
 
   // Check URL parameters for OAuth errors
   useEffect(() => {
@@ -29,65 +57,34 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
     }
   }, []);
 
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!identifier.trim()) {
-      setError("Please enter your username or email.");
-      return;
-    }
-    if (!password) {
-      setError("Please enter your password.");
-      return;
-    }
-
-    setLoading(true);
+  const handleSignIn = async (data: LoginInput) => {
     setError(null);
 
     try {
-      const res = await api.post("/auth/login", {
-        identifier: identifier.trim(),
-        password,
-      });
+      const res = await api.post("/auth/login", data);
       onLoginSuccess(res.data.user.username);
     } catch (err: any) {
       setError(
         err.response?.data?.error ||
           "Invalid username/email or password. Please try again."
       );
-    } finally {
-      setLoading(false);
     }
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!registerUsername.trim() || !registerEmail.trim()) {
-      setError("Please provide both a username and an email.");
-      return;
-    }
-
-    if (!registerPassword || registerPassword.length < 6) {
-      setError("Password must be at least 6 characters long.");
-      return;
-    }
-
-    setLoading(true);
+  const handleRegister = async (data: RegisterFormDTO) => {
     setError(null);
 
+    // Strip client-only confirmPassword before sending wire payload to API
+    const { confirmPassword: _, ...apiPayload } = data;
+
     try {
-      const res = await api.post("/auth/register", {
-        username: registerUsername.trim(),
-        email: registerEmail.trim(),
-        password: registerPassword,
-      });
+      const res = await api.post("/auth/register", apiPayload);
       onLoginSuccess(res.data.user.username);
     } catch (err: any) {
       setError(
         err.response?.data?.error ||
           "Registration failed. Username or email may already be in use."
       );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -96,7 +93,7 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
   };
 
   const handleGuestBypass = async () => {
-    setLoading(true);
+    setGuestLoading(true);
     setError(null);
 
     try {
@@ -105,8 +102,15 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to initialize guest session.");
     } finally {
-      setLoading(false);
+      setGuestLoading(false);
     }
+  };
+
+  const toggleMode = () => {
+    setIsRegisterMode(!isRegisterMode);
+    setError(null);
+    loginForm.reset();
+    registerForm.reset();
   };
 
   return (
@@ -127,7 +131,7 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
             type="button"
             className={styles.socialBtn}
             onClick={() => handleSocialLogin("github")}
-            disabled={loading}
+            disabled={isSubmitting}
           >
             {/* GitHub SVG */}
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -140,7 +144,7 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
             type="button"
             className={styles.socialBtn}
             onClick={() => handleSocialLogin("google")}
-            disabled={loading}
+            disabled={isSubmitting}
           >
             {/* Google SVG */}
             <svg width="18" height="18" viewBox="0 0 24 24">
@@ -171,31 +175,43 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
 
         {/* Form: Sign In vs Sign Up */}
         {isRegisterMode ? (
-          <form className={styles.form} onSubmit={handleRegister}>
+          <form className={styles.form} onSubmit={registerForm.handleSubmit(handleRegister)}>
             <div className={styles.fieldGroup}>
               <label className={styles.label}>Username</label>
               <input
                 type="text"
-                className={styles.input}
-                value={registerUsername}
-                onChange={(e) => setRegisterUsername(e.target.value)}
-                disabled={loading}
+                className={`${styles.input} ${
+                  registerForm.formState.errors.username ? styles.inputError : ""
+                }`}
+                {...registerForm.register("username")}
+                disabled={isSubmitting}
                 placeholder="e.g. alex_phatter"
                 autoComplete="username"
               />
+              {registerForm.formState.errors.username && (
+                <span className={styles.fieldError}>
+                  {registerForm.formState.errors.username.message}
+                </span>
+              )}
             </div>
 
             <div className={styles.fieldGroup}>
               <label className={styles.label}>Email Address</label>
               <input
                 type="email"
-                className={styles.input}
-                value={registerEmail}
-                onChange={(e) => setRegisterEmail(e.target.value)}
-                disabled={loading}
+                className={`${styles.input} ${
+                  registerForm.formState.errors.email ? styles.inputError : ""
+                }`}
+                {...registerForm.register("email")}
+                disabled={isSubmitting}
                 placeholder="alex@example.com"
                 autoComplete="email"
               />
+              {registerForm.formState.errors.email && (
+                <span className={styles.fieldError}>
+                  {registerForm.formState.errors.email.message}
+                </span>
+              )}
             </div>
 
             <div className={styles.fieldGroup}>
@@ -203,10 +219,11 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
               <div className={styles.passwordWrapper}>
                 <input
                   type={showPassword ? "text" : "password"}
-                  className={`${styles.input} ${styles.passwordInput}`}
-                  value={registerPassword}
-                  onChange={(e) => setRegisterPassword(e.target.value)}
-                  disabled={loading}
+                  className={`${styles.input} ${styles.passwordInput} ${
+                    registerForm.formState.errors.password ? styles.inputError : ""
+                  }`}
+                  {...registerForm.register("password")}
+                  disabled={isSubmitting}
                   placeholder="At least 6 characters"
                   autoComplete="new-password"
                 />
@@ -219,30 +236,70 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              {registerForm.formState.errors.password && (
+                <span className={styles.fieldError}>
+                  {registerForm.formState.errors.password.message}
+                </span>
+              )}
             </div>
 
-            <button type="submit" className={styles.signInBtn} disabled={loading}>
-              {loading ? (
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>Confirm Password</label>
+              <div className={styles.passwordWrapper}>
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  className={`${styles.input} ${styles.passwordInput} ${
+                    registerForm.formState.errors.confirmPassword ? styles.inputError : ""
+                  }`}
+                  {...registerForm.register("confirmPassword")}
+                  disabled={isSubmitting}
+                  placeholder="Repeat your password"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className={styles.eyeToggleBtn}
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {registerForm.formState.errors.confirmPassword && (
+                <span className={styles.fieldError}>
+                  {registerForm.formState.errors.confirmPassword.message}
+                </span>
+              )}
+            </div>
+
+            <button type="submit" className={styles.signInBtn} disabled={isSubmitting}>
+              {isSubmitting ? (
                 <Loader2 size={18} className={styles.spinIcon} />
               ) : (
                 <UserPlus size={18} />
               )}
-              <span>{loading ? "Creating Account..." : "Create Account"}</span>
+              <span>{isSubmitting ? "Creating Account..." : "Create Account"}</span>
             </button>
           </form>
         ) : (
-          <form className={styles.form} onSubmit={handleSignIn}>
+          <form className={styles.form} onSubmit={loginForm.handleSubmit(handleSignIn)}>
             <div className={styles.fieldGroup}>
               <label className={styles.label}>Username or Email</label>
               <input
                 type="text"
-                className={styles.input}
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                disabled={loading}
+                className={`${styles.input} ${
+                  loginForm.formState.errors.identifier ? styles.inputError : ""
+                }`}
+                {...loginForm.register("identifier")}
+                disabled={isSubmitting}
                 placeholder="Enter your username or email"
                 autoComplete="username"
               />
+              {loginForm.formState.errors.identifier && (
+                <span className={styles.fieldError}>
+                  {loginForm.formState.errors.identifier.message}
+                </span>
+              )}
             </div>
 
             <div className={styles.fieldGroup}>
@@ -250,10 +307,11 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
               <div className={styles.passwordWrapper}>
                 <input
                   type={showPassword ? "text" : "password"}
-                  className={`${styles.input} ${styles.passwordInput}`}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={loading}
+                  className={`${styles.input} ${styles.passwordInput} ${
+                    loginForm.formState.errors.password ? styles.inputError : ""
+                  }`}
+                  {...loginForm.register("password")}
+                  disabled={isSubmitting}
                   placeholder="Enter your password"
                   autoComplete="current-password"
                 />
@@ -266,15 +324,20 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              {loginForm.formState.errors.password && (
+                <span className={styles.fieldError}>
+                  {loginForm.formState.errors.password.message}
+                </span>
+              )}
             </div>
 
-            <button type="submit" className={styles.signInBtn} disabled={loading}>
-              {loading ? (
+            <button type="submit" className={styles.signInBtn} disabled={isSubmitting}>
+              {isSubmitting ? (
                 <Loader2 size={18} className={styles.spinIcon} />
               ) : (
                 <LogIn size={18} />
               )}
-              <span>{loading ? "Signing In..." : "Sign In"}</span>
+              <span>{isSubmitting ? "Signing In..." : "Sign In"}</span>
             </button>
           </form>
         )}
@@ -287,9 +350,9 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
           type="button"
           className={styles.guestBtn}
           onClick={handleGuestBypass}
-          disabled={loading}
+          disabled={isSubmitting}
         >
-          {loading ? (
+          {guestLoading ? (
             <Loader2 size={18} className={styles.spinIcon} />
           ) : (
             <ShieldAlert size={18} />
@@ -302,12 +365,7 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
           <button
             type="button"
             className={styles.registerLink}
-            onClick={() => {
-              setIsRegisterMode(!isRegisterMode);
-              setError(null);
-              setPassword("");
-              setRegisterPassword("");
-            }}
+            onClick={toggleMode}
           >
             {isRegisterMode ? "Sign In" : "Register"}
           </button>

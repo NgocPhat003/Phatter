@@ -20,11 +20,11 @@ import { setupSocketServer } from "./modules/messages/messages.socket.js";
 import { initMessagesTable } from "./modules/messages/messages.db.js";
 import { initBookmarksTable } from "./modules/bookmarks/bookmarks.controller.js";
 import { initNotificationsTable } from "./modules/notifications/notifications.db.js";
-
-dotenv.config();
+import { env } from "./shared/config/env.js";
+import { errorHandler } from "./shared/middleware/errorHandler.js";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = env.PORT;
 
 // Create HTTP server for both Express and Socket.io
 const httpServer = http.createServer(app);
@@ -35,7 +35,7 @@ setupSocketServer(httpServer);
 // Core middleware
 app.use(cors({
     origin: [
-      process.env.CLIENT_ORIGIN || "http://localhost:5173",
+      env.CLIENT_ORIGIN,
       "http://localhost:5173",
       "http://127.0.0.1:5173",
     ],
@@ -79,6 +79,9 @@ app.get("/api/health", async (_req, res) => {
         });
     }
 });
+
+// Centralized error handling middleware (must be registered after all routes)
+app.use(errorHandler);
 
 httpServer.listen(PORT, async () => {
     console.log(`[Server]: Phatter API and Socket.io running on ${PORT}`);
