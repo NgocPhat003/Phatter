@@ -10,6 +10,8 @@
 [![Socket.io](https://img.shields.io/badge/Socket.io-4-010101?style=flat&logo=socket.io)](https://socket.io)
 [![Prisma](https://img.shields.io/badge/Prisma-8-2D3748?style=flat&logo=prisma)](https://www.prisma.io)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-NeonDB-4169E1?style=flat&logo=postgresql&logoColor=white)](https://neon.tech)
+[![Zod](https://img.shields.io/badge/Zod-4-3068b7?style=flat&logo=zod&logoColor=white)](https://zod.dev)
+[![React Hook Form](https://img.shields.io/badge/React%20Hook%20Form-7-EC5990?style=flat&logo=reacthookform&logoColor=white)](https://react-hook-form.com)
 [![Zustand](https://img.shields.io/badge/Zustand-5-orange?style=flat)](https://zustand-demo.pmnd.rs)
 [![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat&logo=vite)](https://vite.dev)
 [![PNPM](https://img.shields.io/badge/pnpm-Workspaces-F69220?style=flat&logo=pnpm&logoColor=white)](https://pnpm.io)
@@ -21,6 +23,13 @@
 ---
 
 ## ✨ Features
+
+### 🛡️ End-to-End Type Safety & Shared Validation
+- **Isomorphic Shared Package (`@project-phatter/validation`)** — single source of truth for domain schemas consumed by both frontend forms and backend controllers
+- **Separation of Wire Schemas vs. Form DTOs** — client forms extend core schemas (e.g., adding `confirmPassword` equality checks) while sending clean, stripped payloads to the API
+- **High-Performance Form Management** — powered by **React Hook Form** with `@hookform/resolvers/zod`, eliminating keystroke re-renders via uncontrolled inputs and native DOM refs
+- **Fail-Fast Server Environment Validation** — the Express server parses all environment variables on boot via Zod, halting immediately with clear diagnostics if configurations are missing or weak
+- **Standardized Error Formatting** — centralized Express error middleware translates `ZodError` issues into structured `{ status, message, errors: [{ field, message }] }` responses
 
 ### 🔐 Security-First Authentication
 - **Dual-Token System** — short-lived Access Tokens (15 min) + long-lived Refresh Tokens (7 days) stored in `HttpOnly` cookies to protect against XSS
@@ -82,7 +91,7 @@ Phatter/                        ← PNPM Monorepo
 │   └── server/                 ← Express 5 + Socket.io (Backend API)
 ├── packages/
 │   ├── db/                     ← Prisma 8 client + schema (shared)
-│   └── validation/             ← Zod schemas (shared, used by both apps)
+│   └── validation/             ← Isomorphic Zod domain schemas (shared)
 ```
 
 ### Frontend (`apps/client`)
@@ -101,26 +110,43 @@ src/
 │   ├── useNotificationStore.ts
 │   └── usePostStore.ts
 ├── layouts/            ← MainLayout, sidebar, nav
-├── routes/             ← Page-level route components
+├── routes/             ← Page-level route components (Login with React Hook Form)
 ├── lib/                ← Axios instance with interceptor
 └── hooks/              ← Custom React hooks
 ```
 
 ### Backend (`apps/server`)
 ```
-src/modules/
-├── auth/               ← Register, Login, OAuth, Refresh, Logout
-├── posts/              ← CRUD, feed queries, hashtag extraction
-├── comments/           ← Nested comment threads
-├── likes/
-├── bookmarks/
-├── follows/
-├── users/              ← Profile, directory
-├── messages/           ← DM persistence
-├── conversations/      ← Conversation list
-├── notifications/      ← Fan-out on write
-├── tags/               ← Hashtag trending
-└── uploads/            ← Cloudinary integration
+src/
+├── modules/            ← Feature-based API modules
+│   ├── auth/           ← Register, Login, OAuth, Refresh, Logout
+│   ├── posts/          ← CRUD, feed queries, hashtag extraction
+│   ├── comments/       ← Nested comment threads
+│   ├── likes/
+│   ├── bookmarks/
+│   ├── follows/
+│   ├── users/          ← Profile, directory
+│   ├── messages/       ← DM persistence & Socket.io engine
+│   ├── conversations/  ← Conversation list
+│   ├── notifications/  ← Fan-out on write
+│   ├── tags/           ← Hashtag trending
+│   └── uploads/        ← Cloudinary integration
+└── shared/
+    ├── config/         ← Fail-fast env.ts, jwt.config.ts, cloudinary.config.ts
+    ├── errors/         ← toAppError.ts (ZodError to structured response)
+    ├── middleware/     ← auth.middleware.ts, errorHandler.ts, validate.middleware.ts
+    └── utils/          ← tokens.util.ts, jwt.util.ts
+```
+
+### Shared Validation Package (`packages/validation`)
+```
+packages/validation/src/
+├── auth.ts             ← LoginSchema, RegisterSchema, RegisterFormSchema (confirmPassword)
+├── posts.ts            ← CreatePostSchema, CreateCommentSchema
+├── messages.ts         ← SendMessageSchema
+├── users.ts            ← UserProfileSchema (Cloudinary URL regex check)
+├── common.ts           ← PaginationQuerySchema, positiveIntFromString
+└── index.ts            ← Public barrel export
 ```
 
 ### Database Schema (PostgreSQL via NeonDB)
@@ -138,22 +164,27 @@ Post ──< PostTag >── Tag
 
 ---
 
-## 🛡️ Auth Flow
+## 🛡️ Auth & Validation Flow
 
 ```
-                    ┌─────────────────────────────────────────┐
-                    │           Browser (HttpOnly Cookies)    │
-                    │  accessToken (15min)  refreshToken (7d) │
-                    └────────────────┬────────────────────────┘
-                                     │
-          ┌──────── 200 OK ──────────┤ ─── 401 ───────────────────────┐
-          │                          │                                 │
-    Protected Route            Express API               POST /api/auth/refresh
-          │                          │                        │
-          │                    auth.middleware           Verify hash(RT)
-          │                    verifies AT JWT           Issue new AT + RT
-          │                                              Rotate token family
-          └──────────────────────────┴─────────────────────────────────┘
+   ┌─────────────────────────────────────────────────────────────┐
+   │                      React Client                           │
+   │  React Hook Form + zodResolver(RegisterFormSchema)          │
+   │  (Instant client-side feedback + confirmPassword check)     │
+   └──────────────────────────────┬──────────────────────────────┘
+                                  │ POST (clean payload only)
+                                  ▼
+   ┌─────────────────────────────────────────────────────────────┐
+   │                      Express API                            │
+   │  env.ts (Fail-fast boot validation of secrets & DB URL)     │
+   │  auth.controller -> RegisterSchema.safeParse(req.body)      │
+   │  errorHandler -> formats ZodError into structured JSON      │
+   └──────────────────────────────┬──────────────────────────────┘
+                                  │
+          ┌──────── 200 OK ───────┤ ──── 401 ────────────────────┐
+          ▼                       ▼                              ▼
+    Protected Route         Dual-Token Cookies        POST /api/auth/refresh
+    (Access Token 15m)      AT + RT (HttpOnly)        Verify hash(RT) & Rotate
 ```
 
 **Replay Attack Protection:** If a stolen/rotated token is replayed, the entire token family (all sessions) is revoked immediately.
@@ -277,6 +308,7 @@ This starts both the client (`http://localhost:5173`) and server (`http://localh
 | **Build Tool** | Vite 8 |
 | **Language** | TypeScript 5+ |
 | **Routing** | React Router v7 |
+| **Form Management** | React Hook Form 7 |
 | **State Management** | Zustand 5 |
 | **Styling** | CSS Modules |
 | **HTTP Client** | Axios (with interceptor) |
@@ -286,11 +318,11 @@ This starts both the client (`http://localhost:5173`) and server (`http://localh
 | **Runtime** | Node.js 20+ |
 | **ORM** | Prisma 8 |
 | **Database** | PostgreSQL (NeonDB serverless) |
+| **Schema Validation** | Zod (`@project-phatter/validation`) |
 | **Auth** | JWT (`jsonwebtoken`), bcryptjs |
 | **File Uploads** | Multer + Cloudinary |
 | **Real-time** | Socket.io 4 |
 | **Monorepo** | PNPM Workspaces |
-| **Validation** | Zod (shared package) |
 
 ---
 
@@ -312,10 +344,10 @@ Phatter/
 │   └── server/
 │       └── src/
 │           ├── modules/        # Feature-based API modules
-│           └── shared/         # Middleware, utils, config
+│           └── shared/         # Config (env), errors, middleware, utils
 ├── packages/
 │   ├── db/                     # Prisma schema + client
-│   └── validation/             # Zod schemas (shared)
+│   └── validation/             # Modular Zod schemas & form DTOs
 ├── pnpm-workspace.yaml
 └── package.json
 ```
@@ -341,4 +373,3 @@ Phatter/
 <div align="center">
   <sub>Built with ❤️ as a portfolio project</sub>
 </div>
-
