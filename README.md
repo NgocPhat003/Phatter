@@ -4,21 +4,49 @@
 
 **A full-stack Twitter/X clone built with modern web technologies**
 
+### 🚀 [Live Demo Application](https://phatter-ngocphat003.vercel.app) · [📡 API Health Status](https://phatter-api.onrender.com/api/health)
+
+[![Vercel](https://img.shields.io/badge/Vercel-Live%20App-black?style=for-the-badge&logo=vercel)](https://phatter-ngocphat003.vercel.app)
+[![Render](https://img.shields.io/badge/Render-Live%20API-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://phatter-api.onrender.com)
+[![Neon](https://img.shields.io/badge/NeonDB-Serverless%20Postgres-00E599?style=for-the-badge&logo=postgresql&logoColor=black)](https://neon.tech)
+
+<br/>
+
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat&logo=react&logoColor=black)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Express](https://img.shields.io/badge/Express-5-000000?style=flat&logo=express&logoColor=white)](https://expressjs.com)
 [![Socket.io](https://img.shields.io/badge/Socket.io-4-010101?style=flat&logo=socket.io)](https://socket.io)
 [![Prisma](https://img.shields.io/badge/Prisma-8-2D3748?style=flat&logo=prisma)](https://www.prisma.io)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-NeonDB-4169E1?style=flat&logo=postgresql&logoColor=white)](https://neon.tech)
 [![Zod](https://img.shields.io/badge/Zod-4-3068b7?style=flat&logo=zod&logoColor=white)](https://zod.dev)
 [![React Hook Form](https://img.shields.io/badge/React%20Hook%20Form-7-EC5990?style=flat&logo=reacthookform&logoColor=white)](https://react-hook-form.com)
 [![Zustand](https://img.shields.io/badge/Zustand-5-orange?style=flat)](https://zustand-demo.pmnd.rs)
 [![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat&logo=vite)](https://vite.dev)
 [![PNPM](https://img.shields.io/badge/pnpm-Workspaces-F69220?style=flat&logo=pnpm&logoColor=white)](https://pnpm.io)
 
-[Features](#-features) · [Architecture](#-architecture) · [Getting Started](#-getting-started) · [API Reference](#-api-reference)
+[Live Demo](#-live-demo--demo-accounts) · [Features](#-features) · [Architecture](#-architecture) · [Getting Started](#-getting-started) · [API Reference](#-api-reference)
 
 </div>
+
+---
+
+## 🌐 Live Demo & Demo Accounts
+
+The full-stack application is live and hosted with automatic CI/CD:
+- **Client (Frontend)**: [https://phatter-ngocphat003.vercel.app](https://phatter-ngocphat003.vercel.app)
+- **Server (Backend API)**: [https://phatter-api.onrender.com](https://phatter-api.onrender.com)
+
+### Quick Test Credentials
+You can test the application instantly with the **Guest Sandbox** (no account required) or with pre-seeded demo accounts:
+
+| Username | Email | Password | Role |
+|---|---|---|---|
+| `sarah_dev` | `sarah@phatter.com` | `password123` | Software Engineer |
+| `alexchen` | `alex@phatter.com` | `password123` | Full-stack Dev |
+| `elena_ai` | `elena@phatter.com` | `password123` | AI Researcher |
+| `marcus_b` | `marcus@phatter.com` | `password123` | Product Designer |
+| *Guest Sandbox* | *N/A* | *N/A* | Instant Sandbox (One-Click) |
+
+*(Note: Free-tier Render web services spin down after inactivity. If the first request takes ~30s, the instance is waking up).*
 
 ---
 
@@ -37,10 +65,12 @@
 - **Replay Attack Detection** — reusing a rotated token triggers full session-family revocation across all devices
 - **SHA-256 Token Hashing** — raw tokens are never stored in the database, only their hashes
 - **Axios 401 Interceptor** with mutex lock — silently refreshes tokens in the background and retries queued requests
+- **Cross-Domain Cookie Support** — configured with `sameSite: "none"` and `secure: true` to support decoupled deployments (Vercel ↔ Render)
 
 ### 🌐 OAuth 2.0 Social Login
-- **GitHub** and **Google** OAuth flows
+- **GitHub** and **Google** OAuth flows with dynamic callback derivation
 - Auto-generated unique usernames for social accounts
+- Development Mock-OAuth bypass for rapid testing
 
 ### 🏠 Feeds & Posts
 - **Global feed** (all posts) and **Following feed** (only followed users)
@@ -87,10 +117,10 @@
 ```
 Phatter/                        ← PNPM Monorepo
 ├── apps/
-│   ├── client/                 ← React 19 + Vite (Frontend)
-│   └── server/                 ← Express 5 + Socket.io (Backend API)
+│   ├── client/                 ← React 19 + Vite (Frontend, hosted on Vercel)
+│   └── server/                 ← Express 5 + Socket.io (Backend API, hosted on Render)
 ├── packages/
-│   ├── db/                     ← Prisma 8 client + schema (shared)
+│   ├── db/                     ← Prisma 8 client + schema (NeonDB PostgreSQL)
 │   └── validation/             ← Isomorphic Zod domain schemas (shared)
 ```
 
@@ -111,7 +141,7 @@ src/
 │   └── usePostStore.ts
 ├── layouts/            ← MainLayout, sidebar, nav
 ├── routes/             ← Page-level route components (Login with React Hook Form)
-├── lib/                ← Axios instance with interceptor
+├── lib/                ← Axios instance with interceptor, socket setup
 └── hooks/              ← Custom React hooks
 ```
 
@@ -168,14 +198,14 @@ Post ──< PostTag >── Tag
 
 ```
    ┌─────────────────────────────────────────────────────────────┐
-   │                      React Client                           │
+   │                 Vercel Client (React 19)                    │
    │  React Hook Form + zodResolver(RegisterFormSchema)          │
    │  (Instant client-side feedback + confirmPassword check)     │
    └──────────────────────────────┬──────────────────────────────┘
                                   │ POST (clean payload only)
                                   ▼
    ┌─────────────────────────────────────────────────────────────┐
-   │                      Express API                            │
+   │                 Render Server (Express 5)                   │
    │  env.ts (Fail-fast boot validation of secrets & DB URL)     │
    │  auth.controller -> RegisterSchema.safeParse(req.body)      │
    │  errorHandler -> formats ZodError into structured JSON      │
@@ -183,8 +213,8 @@ Post ──< PostTag >── Tag
                                   │
           ┌──────── 200 OK ───────┤ ──── 401 ────────────────────┐
           ▼                       ▼                              ▼
-    Protected Route         Dual-Token Cookies        POST /api/auth/refresh
-    (Access Token 15m)      AT + RT (HttpOnly)        Verify hash(RT) & Rotate
+    Protected Route       Cross-Domain Cookies        POST /api/auth/refresh
+    (Access Token 15m)    sameSite: "none", secure    Verify hash(RT) & Rotate
 ```
 
 **Replay Attack Protection:** If a stolen/rotated token is replayed, the entire token family (all sessions) is revoked immediately.
@@ -302,27 +332,28 @@ This starts both the client (`http://localhost:5173`) and server (`http://localh
 
 ## 🧰 Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| **Frontend Framework** | React 19 |
-| **Build Tool** | Vite 8 |
-| **Language** | TypeScript 5+ |
-| **Routing** | React Router v7 |
-| **Form Management** | React Hook Form 7 |
-| **State Management** | Zustand 5 |
-| **Styling** | CSS Modules |
-| **HTTP Client** | Axios (with interceptor) |
-| **Real-time** | Socket.io Client 4 |
-| **Icons** | Lucide React |
-| **Backend Framework** | Express 5 |
-| **Runtime** | Node.js 20+ |
-| **ORM** | Prisma 8 |
-| **Database** | PostgreSQL (NeonDB serverless) |
-| **Schema Validation** | Zod (`@project-phatter/validation`) |
-| **Auth** | JWT (`jsonwebtoken`), bcryptjs |
-| **File Uploads** | Multer + Cloudinary |
-| **Real-time** | Socket.io 4 |
-| **Monorepo** | PNPM Workspaces |
+| Layer | Technology | Details |
+|---|---|---|
+| **Frontend Framework** | React 19 | Feature-sliced architecture |
+| **Build Tool** | Vite 8 | Fast HMR & bundling |
+| **Language** | TypeScript 5+ | End-to-end strict typing |
+| **Routing** | React Router v7 | URL-synced client routing with SPA rewrites |
+| **Form Management** | React Hook Form 7 | High performance, zero keystroke re-renders |
+| **State Management** | Zustand 5 | Auth, post, and notification stores |
+| **Styling** | CSS Modules | Modular component styling |
+| **HTTP Client** | Axios | Interceptor with mutex for silent token rotation |
+| **Real-time** | Socket.io 4 | WebSockets for messaging & presence |
+| **Icons** | Lucide React | Modern feather-based SVG icons |
+| **Backend Framework** | Express 5 | REST API + centralized error handling |
+| **Runtime** | Node.js 20+ | `tsx` TypeScript runtime |
+| **ORM** | Prisma 8 | Neon PostgreSQL driver |
+| **Database** | PostgreSQL | Hosted on NeonDB serverless |
+| **Schema Validation** | Zod (`@project-phatter/validation`) | Shared isomorphic workspace package |
+| **Auth** | JWT + bcryptjs | Dual-token with RTR & session family revocation |
+| **File Uploads** | Multer + Cloudinary | Cloud image storage |
+| **Monorepo** | PNPM Workspaces | Shared packages (`db`, `validation`) |
+| **Frontend Deployment** | Vercel | Global Edge CDN with continuous deployment |
+| **Backend Deployment** | Render | Managed Node web service with WebSocket support |
 
 ---
 
@@ -340,6 +371,7 @@ Phatter/
 │   │   │   ├── lib/            # Axios, socket setup
 │   │   │   ├── hooks/          # Custom hooks
 │   │   │   └── types/          # Shared TS types
+│   │   ├── vercel.json         # SPA route rewrites for Vercel
 │   │   └── vite.config.ts
 │   └── server/
 │       └── src/
@@ -348,6 +380,7 @@ Phatter/
 ├── packages/
 │   ├── db/                     # Prisma schema + client
 │   └── validation/             # Modular Zod schemas & form DTOs
+├── render.yaml                 # Render Blueprint for backend deployment
 ├── pnpm-workspace.yaml
 └── package.json
 ```
