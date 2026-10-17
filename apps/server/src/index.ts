@@ -37,11 +37,23 @@ setupSocketServer(httpServer);
 
 // Core middleware
 app.use(cors({
-    origin: [
-      env.CLIENT_ORIGIN,
-      "http://localhost:5173",
-      "http://127.0.0.1:5173",
-    ],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+      if (!origin) return callback(null, true);
+
+      const isAllowed =
+        origin === env.CLIENT_ORIGIN ||
+        origin === "https://phatter-ngocphat003.vercel.app" ||
+        origin.endsWith(".vercel.app") ||
+        origin.includes("localhost") ||
+        origin.includes("127.0.0.1");
+
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS origin not allowed: ${origin}`));
+      }
+    },
     credentials: true,
 }));
 app.use(express.json());

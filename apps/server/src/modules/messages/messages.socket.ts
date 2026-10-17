@@ -47,15 +47,18 @@ function parseCookies(cookieHeader?: string): Record<string, string> {
  * Initializes and configures the Socket.io real-time engine.
  */
 export function setupSocketServer(httpServer: HTTPServer): SocketIOServer {
-  const allowedOrigins = [
-    env.CLIENT_ORIGIN,
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-  ];
-
   io = new SocketIOServer(httpServer, {
     cors: {
-      origin: allowedOrigins,
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        const isAllowed =
+          origin === env.CLIENT_ORIGIN ||
+          origin === "https://phatter-ngocphat003.vercel.app" ||
+          origin.endsWith(".vercel.app") ||
+          origin.includes("localhost") ||
+          origin.includes("127.0.0.1");
+        callback(null, isAllowed);
+      },
       credentials: true,
     },
     pingInterval: 25000,
