@@ -89,7 +89,11 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
   };
 
   const handleSocialLogin = (provider: "github" | "google") => {
-    window.location.href = `http://localhost:3000/api/auth/${provider}`;
+    const serverUrl =
+      import.meta.env.VITE_SERVER_URL ||
+      import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, "") ||
+      "http://localhost:3000";
+    window.location.href = `${serverUrl.replace(/\/api\/?$/, "")}/api/auth/${provider}`;
   };
 
   const handleGuestBypass = async () => {

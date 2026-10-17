@@ -57,10 +57,11 @@ export const issueTokens = async (
  * Clears both auth cookies. Call on logout.
  */
 export const clearTokenCookies = (res: Response): void => {
+  const isProd = process.env.NODE_ENV === "production";
   const baseOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax" as const,
+    secure: isProd,
+    sameSite: isProd ? ("none" as const) : ("lax" as const),
   };
 
   res.clearCookie(jwtConfig.accessCookieName, baseOptions);

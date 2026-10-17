@@ -1,9 +1,14 @@
 import axios from "axios";
 import { useAuthStore } from "../store/useAuthStore";
 
+const serverUrl =
+  import.meta.env.VITE_SERVER_URL ||
+  import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, "") ||
+  "http://localhost:3000";
+
 export const api = axios.create({
-  baseURL: "http://localhost:3000/api",
-  withCredentials: true,  // Always send cookies with every request
+  baseURL: `${serverUrl.replace(/\/api\/?$/, "")}/api`,
+  withCredentials: true, // Always send cookies with every request
 });
 
 // ─── Silent Refresh Interceptor ───────────────────────────────────────────────

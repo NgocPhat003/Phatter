@@ -5,6 +5,7 @@ import { verifyAuthToken } from "../../shared/utils/jwt.util.js";
 import { jwtConfig } from "../../shared/config/jwt.config.js";
 import { insertMessage, markConversationRead } from "./messages.db.js";
 import { SendMessageSchema } from "@project-phatter/validation";
+import { env } from "../../shared/config/env.js";
 
 // Global reference to the Socket.io server instance
 let io: SocketIOServer | null = null;
@@ -47,7 +48,7 @@ function parseCookies(cookieHeader?: string): Record<string, string> {
  */
 export function setupSocketServer(httpServer: HTTPServer): SocketIOServer {
   const allowedOrigins = [
-    process.env.CLIENT_ORIGIN || "http://localhost:5173",
+    env.CLIENT_ORIGIN,
     "http://localhost:5173",
     "http://127.0.0.1:5173",
   ];

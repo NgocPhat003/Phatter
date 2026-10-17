@@ -26,6 +26,9 @@ import { errorHandler } from "./shared/middleware/errorHandler.js";
 const app = express();
 const PORT = env.PORT;
 
+// Trust reverse proxy (Render / Railway / Cloud load balancers) for HTTPS cookies
+app.set("trust proxy", 1);
+
 // Create HTTP server for both Express and Socket.io
 const httpServer = http.createServer(app);
 

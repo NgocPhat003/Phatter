@@ -2,10 +2,11 @@ import { io, Socket } from "socket.io-client";
 
 let socket: Socket | null = null;
 
-// Determine backend URL (fallback to localhost:3000 in dev)
-const SOCKET_URL = import.meta.env.VITE_API_URL
-  ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, "")
-  : "http://localhost:3000";
+const SOCKET_URL = (
+  import.meta.env.VITE_SERVER_URL ||
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:3000"
+).replace(/\/api\/?$/, "");
 
 /**
  * Gets the current active socket instance, or null if not connected.
