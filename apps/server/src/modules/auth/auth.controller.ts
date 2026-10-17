@@ -222,15 +222,17 @@ export const refreshToken = async (req: Request, res: Response) => {
 // GitHub OAuth
 // ----------------------------------------------------
 
-export const initiateGithubAuth = (_req: Request, res: Response) => {
+export const initiateGithubAuth = (req: Request, res: Response) => {
   const clientId = process.env.GITHUB_CLIENT_ID;
-  const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
 
   if (!clientId || clientId === "your_oauth_app_id") {
     return res.redirect(`/api/auth/mock-oauth?provider=github`);
   }
 
-  const redirectUri = encodeURIComponent(`http://localhost:3000/api/auth/github/callback`);
+  const proto = req.headers["x-forwarded-proto"] || req.protocol;
+  const host = req.get("host");
+  const serverBase = process.env.SERVER_URL || `${proto}://${host}`;
+  const redirectUri = encodeURIComponent(`${serverBase}/api/auth/github/callback`);
   const githubUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=user:email`;
   res.redirect(githubUrl);
 };
@@ -297,14 +299,17 @@ export const handleGithubCallback = async (req: Request, res: Response) => {
 // Google (Gmail) OAuth
 // ----------------------------------------------------
 
-export const initiateGoogleAuth = (_req: Request, res: Response) => {
+export const initiateGoogleAuth = (req: Request, res: Response) => {
   const clientId = process.env.GOOGLE_CLIENT_ID;
 
   if (!clientId || clientId === "your_google_client_id") {
     return res.redirect(`/api/auth/mock-oauth?provider=google`);
   }
 
-  const redirectUri = encodeURIComponent(`http://localhost:3000/api/auth/google/callback`);
+  const proto = req.headers["x-forwarded-proto"] || req.protocol;
+  const host = req.get("host");
+  const serverBase = process.env.SERVER_URL || `${proto}://${host}`;
+  const redirectUri = encodeURIComponent(`${serverBase}/api/auth/google/callback`);
   const googleUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid%20email%20profile`;
   res.redirect(googleUrl);
 };
@@ -319,7 +324,11 @@ export const handleGoogleCallback = async (req: Request, res: Response) => {
 
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    const redirectUri = `http://localhost:3000/api/auth/google/callback`;
+
+    const proto = req.headers["x-forwarded-proto"] || req.protocol;
+    const host = req.get("host");
+    const serverBase = process.env.SERVER_URL || `${proto}://${host}`;
+    const redirectUri = `${serverBase}/api/auth/google/callback`;
 
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
