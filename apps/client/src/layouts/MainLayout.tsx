@@ -13,13 +13,15 @@ import {
   LogOut,
 } from "lucide-react";
 import styles from "./MainLayout.module.css";
+import { useAuthStore } from "../store/useAuthStore";
+import { useNotificationStore } from "../store/useNotificationStore";
 
 interface MainLayoutProps {
   children: ReactNode;
-  currentUser: string | null;
+  currentUser?: string | null;
   currentUserAvatar?: string | null;
   activeView?: "timeline" | "directory" | "profile" | "hashtags" | "messages" | "bookmarks" | "notifications";
-  onLogout: () => void;
+  onLogout?: () => void;
   onOpenProfile?: (username: string) => void;
   onGoHome?: () => void;
   onOpenDirectory?: () => void;
@@ -36,8 +38,8 @@ export const MainLayout = ({
   currentUser,
   currentUserAvatar,
   activeView,
-  unreadMessagesCount = 0,
-  unreadNotificationsCount = 0,
+  unreadMessagesCount,
+  unreadNotificationsCount,
   onLogout,
   onOpenProfile,
   onGoHome,
@@ -50,6 +52,19 @@ export const MainLayout = ({
   const navigate = useNavigate();
   const location = useLocation();
   const pathname = location.pathname;
+
+  const storeUser = useAuthStore((s) => s.currentUser);
+  const storeLogout = useAuthStore((s) => s.logout);
+  const storeUnreadMessages = useNotificationStore((s) => s.unreadMessagesCount);
+  const storeUnreadNotifs = useNotificationStore((s) => s.unreadNotificationsCount);
+
+  const effectiveUsername =
+    currentUser !== undefined ? currentUser : storeUser?.username || null;
+  const effectiveAvatar =
+    currentUserAvatar !== undefined ? currentUserAvatar : storeUser?.profilePictureUrl;
+  const handleLogout = onLogout || storeLogout;
+  const effectiveUnreadMessages = unreadMessagesCount ?? storeUnreadMessages;
+  const effectiveUnreadNotifs = unreadNotificationsCount ?? storeUnreadNotifs;
 
   const currentActiveView =
     activeView !== undefined
@@ -104,9 +119,9 @@ export const MainLayout = ({
             >
               <div className={styles.navIconWrapper}>
                 <Bell size={20} />
-                {unreadNotificationsCount > 0 && (
+                {effectiveUnreadNotifs > 0 && (
                   <span className={styles.unreadBadge}>
-                    {unreadNotificationsCount > 99 ? "99+" : unreadNotificationsCount}
+                    {effectiveUnreadNotifs > 99 ? "99+" : effectiveUnreadNotifs}
                   </span>
                 )}
               </div>
@@ -132,9 +147,9 @@ export const MainLayout = ({
             >
               <div className={styles.navIconWrapper}>
                 <MessageSquare size={20} />
-                {unreadMessagesCount > 0 && (
+                {effectiveUnreadMessages > 0 && (
                   <span className={styles.unreadBadge}>
-                    {unreadMessagesCount > 99 ? "99+" : unreadMessagesCount}
+                    {effectiveUnreadMessages > 99 ? "99+" : effectiveUnreadMessages}
                   </span>
                 )}
               </div>
@@ -175,32 +190,32 @@ export const MainLayout = ({
 
           <button
             className={styles.utilityBtn}
-            onClick={onLogout}
+            onClick={handleLogout}
             title="Log Out"
           >
             <LogOut size={18} />
             <span className={styles.utilityLabel}>Log Out</span>
           </button>
 
-          {currentUser && (
+          {effectiveUsername && (
             <div
               className={styles.userCard}
-              title={`View @${currentUser}'s profile`}
-              onClick={() => (onOpenProfile ? onOpenProfile(currentUser) : navigate(`/profile/${currentUser}`))}
+              title={`View @${effectiveUsername}'s profile`}
+              onClick={() => (onOpenProfile ? onOpenProfile(effectiveUsername) : navigate(`/profile/${effectiveUsername}`))}
               style={{ cursor: "pointer" }}
             >
               <div className={styles.userInitialAvatar}>
-                {currentUserAvatar ? (
+                {effectiveAvatar ? (
                   <img
-                    src={currentUserAvatar}
-                    alt={currentUser}
+                    src={effectiveAvatar}
+                    alt={effectiveUsername}
                     className={styles.avatarImg}
                   />
                 ) : (
-                  currentUser.slice(0, 1).toUpperCase()
+                  effectiveUsername.slice(0, 1).toUpperCase()
                 )}
               </div>
-              <span className={styles.usernameDisplay}>{currentUser}</span>
+              <span className={styles.usernameDisplay}>{effectiveUsername}</span>
             </div>
           )}
         </div>

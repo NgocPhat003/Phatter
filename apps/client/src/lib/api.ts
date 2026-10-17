@@ -1,4 +1,5 @@
 import axios from "axios";
+import { useAuthStore } from "../store/useAuthStore";
 
 export const api = axios.create({
   baseURL: "http://localhost:3000/api",
@@ -92,9 +93,9 @@ api.interceptors.response.use(
       // Drain the queue with the error so all pending requests reject too
       drainQueue(refreshError);
 
-      // At this point the user needs to log in again.
-      // We don't redirect here — let the app's state management handle it
-      // (e.g., App.tsx's fetchSession will fail, setting currentUser to null)
+      // Reset global auth store immediately so the UI cleanly switches to login
+      useAuthStore.getState().setCurrentUser(null);
+
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;

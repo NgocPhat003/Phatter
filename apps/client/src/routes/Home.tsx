@@ -24,10 +24,11 @@ import { connectSocket } from "../lib/socket";
 import { initOnlineUsersTracker } from "../hooks/useOnlineUsers";
 import { Globe, Users, Clock, Flame, History } from "lucide-react";
 import styles from "./Home.module.css";
+import { useAuthStore, useNotificationStore, usePostStore } from "../store";
 
 interface HomeProps {
-  currentUser: CurrentUser | string | null;
-  onLogout: () => void;
+  currentUser?: CurrentUser | string | null;
+  onLogout?: () => void;
   onProfileUpdated?: () => void;
 }
 
@@ -117,69 +118,61 @@ const MessagesRoute = ({
 
 // ─── Main Home Component ──────────────────────────────────────────────────────
 
-export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => {
+export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps = {}) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const storeUser = useAuthStore((s) => s.currentUser);
+  const storeLogout = useAuthStore((s) => s.logout);
+  const storeFetchSession = useAuthStore((s) => s.fetchSession);
+
   const currentUsername =
-    typeof currentUser === "string" ? currentUser : currentUser?.username || null;
+    currentUser !== undefined
+      ? (typeof currentUser === "string" ? currentUser : currentUser?.username || null)
+      : storeUser?.username || null;
   const currentUserAvatar =
-    typeof currentUser === "object" ? currentUser?.profilePictureUrl : null;
+    currentUser !== undefined
+      ? (typeof currentUser === "object" ? currentUser?.profilePictureUrl : null)
+      : storeUser?.profilePictureUrl || null;
+
+  const handleLogout = onLogout || storeLogout;
+  const handleProfileUpdated = onProfileUpdated || storeFetchSession;
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [unreadMessagesCount, setUnreadMessagesCount] = useState<number>(0);
-  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number>(0);
-  const [activeFeed, setActiveFeed] = useState<"for-you" | "following">("for-you");
-  const [activeSort, setActiveSort] = useState<"latest" | "popular" | "oldest">("latest");
+
+  const {
+    unreadMessagesCount,
+    unreadNotificationsCount,
+    fetchUnreadCounts,
+  } = useNotificationStore();
+
+  const { activeFeed, activeSort, setActiveFeed, setActiveSort } = usePostStore();
 
   const isTimeline = location.pathname === "/" || location.pathname === "/home";
 
-  const fetchUnreadCount = useCallback(async () => {
-    try {
-      const res = await api.get("/messages/unread-count");
-      setUnreadMessagesCount(res.data?.unreadCount || 0);
-    } catch (err) {
-      console.error("Failed to load unread messages count:", err);
-    }
-  }, []);
-
-  const fetchUnreadNotificationsCount = useCallback(async () => {
-    try {
-      const res = await api.get("/notifications/unread-count");
-      setUnreadNotificationsCount(res.data?.unreadCount || 0);
-    } catch (err) {
-      console.error("Failed to load unread notifications count:", err);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchUnreadCount();
-    fetchUnreadNotificationsCount();
-  }, [fetchUnreadCount, fetchUnreadNotificationsCount]);
+    fetchUnreadCounts();
+  }, [fetchUnreadCounts]);
 
   useEffect(() => {
     initOnlineUsersTracker();
     const socket = connectSocket();
 
     const handleUpdate = () => {
-      fetchUnreadCount();
-    };
-
-    const handleNotificationUpdate = () => {
-      fetchUnreadNotificationsCount();
+      fetchUnreadCounts();
     };
 
     socket.on("new_message", handleUpdate);
     socket.on("messages_read", handleUpdate);
-    socket.on("new_notification", handleNotificationUpdate);
+    socket.on("new_notification", handleUpdate);
 
     return () => {
       socket.off("new_message", handleUpdate);
       socket.off("messages_read", handleUpdate);
-      socket.off("new_notification", handleNotificationUpdate);
+      socket.off("new_notification", handleUpdate);
     };
-  }, [fetchUnreadCount, fetchUnreadNotificationsCount]);
+  }, [fetchUnreadCounts]);
 
   const fetchFeed = useCallback(async () => {
     try {
@@ -209,7 +202,7 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
     <MainLayout
       currentUser={currentUsername}
       currentUserAvatar={currentUserAvatar}
-      onLogout={onLogout}
+      onLogout={handleLogout}
       unreadMessagesCount={unreadMessagesCount}
       unreadNotificationsCount={unreadNotificationsCount}
     >
@@ -322,7 +315,7 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
             <NotificationsView
               currentUser={currentUsername}
               onOpenProfile={(u) => navigate(`/profile/${u}`)}
-              onRefreshUnreadCount={fetchUnreadNotificationsCount}
+              onRefreshUnreadCount={fetchUnreadCounts}
             />
           }
         />
@@ -352,9 +345,8 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
           path="/messages"
           element={
             <MessagesRoute
-              currentUser={currentUser}
+              currentUser={currentUsername}
               currentUserAvatar={currentUserAvatar}
-              onRefreshUnreadCount={fetchUnreadCount}
             />
           }
         />
@@ -362,9 +354,8 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
           path="/messages/:partnerUsername"
           element={
             <MessagesRoute
-              currentUser={currentUser}
+              currentUser={currentUsername}
               currentUserAvatar={currentUserAvatar}
-              onRefreshUnreadCount={fetchUnreadCount}
             />
           }
         />
@@ -409,7 +400,7 @@ export const Home = ({ currentUser, onLogout, onProfileUpdated }: HomeProps) => 
               currentUsername={currentUsername}
               currentUserAvatar={currentUserAvatar}
               onProfileUpdated={() => {
-                onProfileUpdated?.();
+                handleProfileUpdated();
                 fetchFeed();
               }}
             />

@@ -5,12 +5,13 @@ import { Heart, MessageCircle, Bookmark, Trash2 } from "lucide-react";
 import { CommentSection } from "./CommentSection";
 import { ConfirmModal } from "../../../components/common/ConfirmModal";
 import styles from "./PostCard.module.css";
+import { useAuthStore } from "../../../store/useAuthStore";
 
 interface PostCardProps {
   post: Post;
-  currentUser: string | null;
+  currentUser?: string | null;
   currentUserAvatar?: string | null;
-  onRequireLogin: () => void;
+  onRequireLogin?: () => void;
   onPostUpdated?: () => void;
   onPostDeleted?: (postId: string) => void;
   onOpenProfile?: (username: string) => void;
@@ -27,6 +28,14 @@ export const PostCard = ({
   onOpenProfile,
   onSelectHashtag,
 }: PostCardProps) => {
+  const storeUser = useAuthStore((s) => s.currentUser);
+  const effectiveUser =
+    currentUser !== undefined
+      ? (typeof currentUser === "string" ? currentUser : (currentUser as any)?.username || null)
+      : storeUser?.username || null;
+  const effectiveAvatar =
+    currentUserAvatar !== undefined ? currentUserAvatar : storeUser?.profilePictureUrl || null;
+
   const [likesCount, setLikesCount] = useState(post.engagement.likesCount);
   const [isLiked, setIsLiked] = useState(post.engagement.isLiked);
   const [isLiking, setIsLiking] = useState(false);
@@ -38,16 +47,13 @@ export const PostCard = ({
   const [commentsCount, setCommentsCount] = useState(post.engagement.commentsCount);
 
   const isOwner = Boolean(
-    currentUser &&
-      (typeof currentUser === "string"
-        ? currentUser === post.author?.username
-        : (currentUser as any)?.username === post.author?.username)
+    effectiveUser && effectiveUser === post.author?.username
   );
 
   const handleDeletePost = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!currentUser) {
-      onRequireLogin();
+    if (!effectiveUser) {
+      onRequireLogin?.();
       return;
     }
     setShowDeleteModal(true);
@@ -75,8 +81,8 @@ export const PostCard = ({
   }, [post.id, post.engagement.isLiked, post.engagement.commentsCount, post.engagement.isBookmarked]);
 
   const handleToggleLike = async () => {
-    if (!currentUser) {
-      onRequireLogin();
+    if (!effectiveUser) {
+      onRequireLogin?.();
       return;
     }
 
@@ -109,8 +115,8 @@ export const PostCard = ({
       };
 
   const handleToggleBookmark = async () => {
-    if (!currentUser) {
-      onRequireLogin();
+    if (!effectiveUser) {
+      onRequireLogin?.();
       return;
     }
 
@@ -258,9 +264,9 @@ export const PostCard = ({
       {showComments && (
         <CommentSection
           postId={post.id}
-          currentUser={currentUser}
-          currentUserAvatar={currentUserAvatar}
-          onRequireLogin={onRequireLogin}
+          currentUser={effectiveUser}
+          currentUserAvatar={effectiveAvatar}
+          onRequireLogin={onRequireLogin || (() => {})}
           onCommentCountChange={handleCommentCountChange}
           onOpenProfile={onOpenProfile}
         />
