@@ -71,6 +71,16 @@ app.use("/api/messages", messagesRoutes);
 app.use("/api/bookmarks", bookmarksRoutes);
 app.use("/api/notifications", notificationsRoutes);
 
+// Lightweight Gateway Ping (Atmospheric Shield - Zero DB overhead)
+app.get(["/api/status", "/status"], (_req, res) => {
+  res.status(200).json({
+    status: "live",
+    service: "phatter-api",
+    uptime: process.uptime(),
+    timestamp: Date.now(),
+  });
+});
+
 // Database Health Check Route
 app.get("/api/health", async (_req, res) => {
     try {

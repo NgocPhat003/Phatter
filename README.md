@@ -110,6 +110,11 @@ You can test the application instantly with the **Guest Sandbox** (no account re
 ### 🎭 Guest Sandbox
 - Try the app without signing up — no account required
 
+### ⚡ Atmospheric Shield & Cold-Start Interceptor
+- **Frame-Zero Shield HUD** — intercepts view on first paint inside `main.tsx` while free-tier cloud containers wake from idle sleep
+- **Active Probe Loop** — pings lightweight `/api/status` route every 3s with live telemetry, radar sweep animation, and transparent architectural notices for recruiters
+- **Lazy Router Delay** — holds React Router and initial session loaders dormant in memory until the server confirms a clean 200 OK, eliminating 502/504 connection drops and broken auth states
+
 ---
 
 ## 🏗️ Architecture
