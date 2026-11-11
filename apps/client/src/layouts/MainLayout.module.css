@@ -2,17 +2,18 @@
   display: flex;
   flex-direction: row;
   min-height: 100vh;
-  background-color: #f7f9fa;
+  background-color: var(--bg-primary);
   width: 100%;
   box-sizing: border-box;
+  transition: background-color 0.2s ease;
 }
 
 /* Left Sidebar - Anchored directly to the left edge of the screen */
 .sidebar {
   width: 250px;
   flex-shrink: 0;
-  background-color: #ffffff;
-  border-right: 1px solid #edf2f7;
+  background-color: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -21,7 +22,7 @@
   top: 0;
   height: 100vh;
   box-sizing: border-box;
-  transition: width 0.15s ease, padding 0.15s ease;
+  transition: width 0.15s ease, padding 0.15s ease, background-color 0.2s ease, border-color 0.2s ease;
   z-index: 50;
 }
 
@@ -31,7 +32,7 @@
   gap: 10px;
   font-size: 1.35rem;
   font-weight: 800;
-  color: #10b981;
+  color: var(--primary);
   margin-bottom: 28px;
   padding: 0 8px;
 }
@@ -50,7 +51,7 @@
   border-radius: 9999px;
   font-size: 0.95rem;
   font-weight: 500;
-  color: #4b5563;
+  color: var(--text-muted);
   text-decoration: none;
   background: transparent;
   border: none;
@@ -61,13 +62,13 @@
 }
 
 .navItem:hover {
-  background-color: #f3f4f6;
-  color: #111827;
+  background-color: var(--bg-surface-hover);
+  color: var(--text-main);
 }
 
 .activeNavItem {
-  background-color: #ecfdf5;
-  color: #059669;
+  background-color: var(--primary-soft);
+  color: var(--primary-text-soft);
   font-weight: 600;
 }
 
@@ -82,7 +83,7 @@
   position: absolute;
   top: -6px;
   right: -9px;
-  background-color: #10b981;
+  background-color: var(--primary);
   color: #ffffff;
   font-size: 0.65rem;
   font-weight: 700;
@@ -93,7 +94,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #ffffff;
+  border: 2px solid var(--bg-surface);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   line-height: 1;
   animation: badgePop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -113,7 +114,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid var(--border-light);
   padding-top: 16px;
 }
 
@@ -125,16 +126,16 @@
   border: none;
   padding: 8px 12px;
   font-size: 0.9rem;
-  color: #6b7280;
+  color: var(--text-muted);
   cursor: pointer;
   border-radius: 9999px;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
   width: 100%;
 }
 
 .utilityBtn:hover {
-  background-color: #f3f4f6;
-  color: #111827;
+  background-color: var(--bg-surface-hover);
+  color: var(--text-main);
 }
 
 .userCard {
@@ -143,14 +144,14 @@
   gap: 10px;
   padding: 6px 8px;
   border-radius: 9999px;
-  background-color: #f9fafb;
+  background-color: var(--bg-surface-secondary);
 }
 
 .userInitialAvatar {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background-color: #10b981;
+  background-color: var(--primary);
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -170,7 +171,7 @@
 .usernameDisplay {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-main);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -182,7 +183,8 @@
   display: flex;
   justify-content: center;
   min-width: 0;
-  background-color: #f7f9fa;
+  background-color: var(--bg-primary);
+  transition: background-color 0.2s ease;
 }
 
 /* Feed Column: Centered exactly in the middle of the available space */

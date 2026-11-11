@@ -11,9 +11,9 @@
   display: flex;
   flex-direction: column;
   padding: 1rem 1.25rem 0.5rem 1.25rem;
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: var(--bg-surface-glass);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .titleRow {
@@ -26,7 +26,7 @@
 .title {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-main);
   margin: 0;
   display: flex;
   align-items: center;
@@ -34,7 +34,7 @@
 }
 
 .unreadBadge {
-  background-color: #10b981;
+  background-color: var(--primary);
   color: #ffffff;
   font-size: 0.75rem;
   font-weight: 700;
@@ -45,7 +45,7 @@
 .markAllBtn {
   background: none;
   border: none;
-  color: #059669;
+  color: var(--primary-text-soft);
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
@@ -58,7 +58,7 @@
 }
 
 .markAllBtn:hover {
-  background-color: #ecfdf5;
+  background-color: var(--primary-soft);
 }
 
 .filterTabs {
@@ -73,7 +73,7 @@
   border: none;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-muted);
   padding: 0.4rem 0.85rem;
   border-radius: 9999px;
   cursor: pointer;
@@ -82,13 +82,13 @@
 }
 
 .filterTab:hover {
-  background-color: #f1f5f9;
-  color: #0f172a;
+  background-color: var(--bg-surface-hover);
+  color: var(--text-main);
 }
 
 .activeFilterTab {
-  background-color: #ecfdf5 !important;
-  color: #059669 !important;
+  background-color: var(--primary-soft) !important;
+  color: var(--primary-text-soft) !important;
 }
 
 .list {
@@ -101,23 +101,23 @@
   align-items: flex-start;
   gap: 1rem;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid #f1f5f9;
-  background-color: #ffffff;
+  border-bottom: 1px solid var(--border-subtle);
+  background-color: var(--bg-surface);
   cursor: pointer;
   transition: background-color 0.15s ease;
   position: relative;
 }
 
 .item:hover {
-  background-color: #f8fafc;
+  background-color: var(--bg-surface-secondary);
 }
 
 .unreadItem {
-  background-color: #f0fdf4;
+  background-color: var(--primary-soft);
 }
 
 .unreadItem:hover {
-  background-color: #ecfdf5;
+  background-color: var(--primary-soft-hover);
 }
 
 .avatarWrapper {
@@ -130,7 +130,7 @@
   height: 44px;
   border-radius: 50%;
   object-fit: cover;
-  background-color: #e2e8f0;
+  background-color: var(--bg-badge-count);
 }
 
 .avatarPlaceholder {
@@ -156,7 +156,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #ffffff;
+  border: 2px solid var(--bg-surface);
   color: #ffffff;
 }
 
@@ -190,14 +190,14 @@
 
 .actionText {
   font-size: 0.9375rem;
-  color: #1e293b;
+  color: var(--text-body);
   margin: 0;
   line-height: 1.4;
 }
 
 .usernameLink {
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-main);
 }
 
 .usernameLink:hover {
@@ -206,25 +206,25 @@
 
 .timestamp {
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: var(--text-subtle);
   white-space: nowrap;
 }
 
 .commentSnippet {
   margin: 0.35rem 0 0 0;
   font-size: 0.875rem;
-  color: #475569;
-  background-color: #f8fafc;
+  color: var(--text-body);
+  background-color: var(--bg-surface-secondary);
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
-  border-left: 3px solid #10b981;
+  border-left: 3px solid var(--primary);
   font-style: italic;
 }
 
 .postSnippet {
   margin: 0.35rem 0 0 0;
   font-size: 0.8125rem;
-  color: #64748b;
+  color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -234,7 +234,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #10b981;
+  background-color: var(--primary);
   flex-shrink: 0;
   margin-top: 0.5rem;
 }
@@ -252,9 +252,9 @@
   justify-content: center;
   padding: 4rem 1.5rem;
   text-align: center;
-  background-color: #ffffff;
+  background-color: var(--bg-surface);
   border-radius: 1rem;
-  border: 1px solid #f1f5f9;
+  border: 1px solid var(--border-subtle);
   margin-top: 1rem;
 }
 
@@ -262,8 +262,8 @@
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background-color: #ecfdf5;
-  color: #10b981;
+  background-color: var(--primary-soft);
+  color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -273,13 +273,13 @@
 .emptyTitle {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-main);
   margin: 0 0 0.5rem 0;
 }
 
 .emptyDesc {
   font-size: 0.9rem;
-  color: #64748b;
+  color: var(--text-muted);
   max-width: 340px;
   margin: 0;
   line-height: 1.5;

@@ -5,7 +5,7 @@
 .pageTitle {
   font-size: 1.5rem;
   font-weight: 800;
-  color: #111827;
+  color: var(--text-main);
   margin-bottom: 16px;
 }
 
@@ -26,19 +26,19 @@
   background: transparent;
   font-size: 0.9rem;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--text-muted);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .realmTab:hover {
-  background-color: #f3f4f6;
-  color: #111827;
+  background-color: var(--bg-surface-hover);
+  color: var(--text-main);
 }
 
 .activeRealmTab {
-  background-color: #ecfdf5;
-  color: #059669;
+  background-color: var(--primary-soft);
+  color: var(--primary-text-soft);
   font-weight: 600;
 }
 
@@ -46,10 +46,10 @@
 .filterPills {
   display: inline-flex;
   gap: 8px;
-  background-color: #ffffff;
+  background-color: var(--bg-surface);
   padding: 4px;
   border-radius: 10px;
-  border: 1px solid #f0f2f5;
+  border: 1px solid var(--border-subtle);
   margin-bottom: 20px;
 }
 
@@ -63,14 +63,18 @@
   background: transparent;
   font-size: 0.825rem;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--text-muted);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
+.filterPill:hover {
+  color: var(--text-main);
+}
+
 .activeFilterPill {
-  background-color: #ecfdf5;
-  color: #059669;
+  background-color: var(--primary-soft);
+  color: var(--primary-text-soft);
   font-weight: 600;
 }
 
@@ -78,6 +82,6 @@
   display: flex;
   justify-content: center;
   padding: 40px 0;
-  color: #9ca3af;
+  color: var(--text-subtle);
   font-size: 0.9rem;
 }

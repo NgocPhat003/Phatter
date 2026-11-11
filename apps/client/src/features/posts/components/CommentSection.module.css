@@ -92,7 +92,7 @@
 
 .cancelBtn {
   background: transparent;
-  color: #64748b;
+  color: var(--text-muted);
   border: none;
   border-radius: 9999px;
   padding: 6px 14px;
@@ -103,8 +103,8 @@
 }
 
 .cancelBtn:hover {
-  background-color: #f1f5f9;
-  color: #0f172a;
+  background-color: var(--bg-surface-hover);
+  color: var(--text-main);
 }
 
 /* --- Comments List --- */
@@ -192,12 +192,12 @@
 
 .replyingTag {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--text-muted);
   margin-left: 2px;
 }
 
 .replyingUsername {
-  color: #10b981;
+  color: var(--primary);
   font-weight: 600;
 }
 
@@ -220,8 +220,8 @@
   font-size: 0.6rem;
   font-weight: 600;
   text-transform: uppercase;
-  background-color: #fef3c7;
-  color: #b45309;
+  background-color: var(--bg-guest-badge);
+  color: var(--text-guest-badge);
   padding: 1px 5px;
   border-radius: 9999px;
   letter-spacing: 0.05em;
@@ -235,7 +235,7 @@
 .commentText {
   font-size: 0.875rem;
   line-height: 1.5;
-  color: #334155;
+  color: var(--text-body);
   white-space: pre-wrap;
   word-break: break-word;
   margin: 2px 0 6px 0;
@@ -251,7 +251,7 @@
 .actionBtn {
   background: none;
   border: none;
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 0.75rem;
   font-weight: 600;
   display: flex;
@@ -264,15 +264,15 @@
 }
 
 .actionBtn:hover {
-  background-color: #f1f5f9;
-  color: #10b981;
+  background-color: var(--bg-surface-hover);
+  color: var(--primary);
 }
 
 /* Thread nested replies container */
 .threadReplies {
   margin-left: 16px;
   padding-left: 14px;
-  border-left: 2px solid #e2e8f0;
+  border-left: 2px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -282,8 +282,8 @@
 .inlineReplyBox {
   margin: 8px 0 12px 0;
   padding: 10px;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background-color: var(--bg-surface-secondary);
+  border: 1px solid var(--border-subtle);
   border-radius: 12px;
   animation: slideDown 0.15s ease-out;
 }
@@ -301,7 +301,7 @@
 
 .inlineReplyHeader {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--text-muted);
   margin-bottom: 6px;
 }
 

@@ -57,7 +57,7 @@
 }
 
 .dangerIcon {
-  background-color: #fee2e2;
+  background-color: var(--danger-icon-bg);
   color: #ef4444;
 }
 
@@ -95,7 +95,7 @@
 }
 
 .cancelBtn:hover:not(:disabled) {
-  background-color: #f1f5f9;
+  background-color: var(--bg-surface-hover);
 }
 
 .confirmBtn {

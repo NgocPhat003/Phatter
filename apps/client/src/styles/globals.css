@@ -3,10 +3,95 @@
   margin: 0;
   padding: 0;
 }
+
+:root {
+  --bg-primary: #f7f9fa;
+  --bg-surface: #ffffff;
+  --bg-surface-secondary: #f8fafc;
+  --bg-surface-hover: #f1f5f9;
+  --bg-surface-glass: rgba(255, 255, 255, 0.88);
+  --bg-input: #f8fafc;
+  --bg-badge-neutral: #f1f5f9;
+  --bg-badge-count: #e2e8f0;
+  --bg-guest-badge: #fef3c7;
+  --text-guest-badge: #b45309;
+
+  --text-main: #0f172a;
+  --text-body: #334155;
+  --text-muted: #64748b;
+  --text-subtle: #94a3b8;
+
+  --border-subtle: #e2e8f0;
+  --border-light: #f1f5f9;
+  --border-strong: #cbd5e1;
+
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  --primary: #10b981;
+  --primary-hover: #059669;
+  --primary-soft: #ecfdf5;
+  --primary-soft-hover: #d1fae5;
+  --primary-border-soft: #a7f3d0;
+  --primary-text-soft: #059669;
+
+  --like-active: #ef4444;
+  --danger-soft: #fef2f2;
+  --danger-icon-bg: #fee2e2;
+  --danger-border: #fca5a5;
+  --danger-text: #dc2626;
+
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #94a3b8;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #0b0f17;
+  --bg-surface: #111827;
+  --bg-surface-secondary: #172033;
+  --bg-surface-hover: #1e293b;
+  --bg-surface-glass: rgba(17, 24, 39, 0.88);
+  --bg-input: #0f172a;
+  --bg-badge-neutral: #1e293b;
+  --bg-badge-count: #334155;
+  --bg-guest-badge: rgba(245, 158, 11, 0.16);
+  --text-guest-badge: #fbbf24;
+
+  --text-main: #f1f5f9;
+  --text-body: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-subtle: #64748b;
+
+  --border-subtle: #1e293b;
+  --border-light: #1a2234;
+  --border-strong: #334155;
+
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-card-hover: 0 6px 16px rgba(0, 0, 0, 0.45);
+  --shadow-modal: 0 24px 38px -6px rgba(0, 0, 0, 0.65), 0 10px 15px -5px rgba(0, 0, 0, 0.4);
+
+  --primary: #10b981;
+  --primary-hover: #059669;
+  --primary-soft: rgba(16, 185, 129, 0.15);
+  --primary-soft-hover: rgba(16, 185, 129, 0.24);
+  --primary-border-soft: rgba(16, 185, 129, 0.35);
+  --primary-text-soft: #34d399;
+
+  --like-active: #ef4444;
+  --danger-soft: rgba(239, 68, 68, 0.14);
+  --danger-icon-bg: rgba(239, 68, 68, 0.18);
+  --danger-border: rgba(239, 68, 68, 0.45);
+  --danger-text: #f87171;
+
+  --scrollbar-thumb: #334155;
+  --scrollbar-thumb-hover: #475569;
+}
+
 /* Sleek custom scrollbar for all browsers */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 /* Chrome, Edge, Safari */
@@ -20,25 +105,14 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #cbd5e1;
+  background-color: var(--scrollbar-thumb);
   border-radius: 9999px;
   border: 1px solid transparent;
   background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #94a3b8;
-}
-
-:root {
-  --bg-primary: #f8fafc;
-  --bg-surface: #ffffff;
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --border-subtle: #e2e8f0;
-  --primary: #10b981;
-  --primary-hover: #059669;
-  --like-active: #ef4444;
+  background-color: var(--scrollbar-thumb-hover);
 }
 
 body {
@@ -48,6 +122,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 button, input, textarea {

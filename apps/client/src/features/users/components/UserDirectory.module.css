@@ -28,7 +28,7 @@
 }
 
 .backBtn:hover {
-  background-color: #f1f5f9;
+  background-color: var(--bg-surface-hover);
   color: var(--text-main);
 }
 
@@ -66,7 +66,7 @@
   padding: 10px 16px 10px 40px;
   border-radius: 9999px;
   border: 1px solid var(--border-subtle);
-  background-color: #ffffff;
+  background-color: var(--bg-surface);
   font-size: 0.9rem;
   color: var(--text-main);
   outline: none;
@@ -76,7 +76,7 @@
 
 .searchInput:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.14);
 }
 
 /* Tabs */
@@ -102,13 +102,13 @@
 }
 
 .tabBtn:hover {
-  background-color: #f1f5f9;
+  background-color: var(--bg-surface-hover);
   color: var(--text-main);
 }
 
 .activeTabBtn {
-  background-color: #ecfdf5 !important;
-  color: #059669 !important;
+  background-color: var(--primary-soft) !important;
+  color: var(--primary-text-soft) !important;
   font-weight: 700;
 }
 
@@ -124,17 +124,17 @@
   align-items: flex-start;
   gap: 14px;
   background-color: var(--bg-surface);
-  border: 1px solid #f0f2f5;
+  border: 1px solid var(--border-subtle);
   border-radius: 14px;
   padding: 16px 18px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  box-shadow: var(--shadow-card);
   cursor: pointer;
   transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
 }
 
 .userCard:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-card-hover);
 }
 
 /* Avatar */
@@ -184,8 +184,8 @@
 }
 
 .guestBadge {
-  background-color: #fef3c7;
-  color: #92400e;
+  background-color: var(--bg-guest-badge);
+  color: var(--text-guest-badge);
   font-size: 0.65rem;
   font-weight: 700;
   padding: 1px 6px;
@@ -194,8 +194,8 @@
 }
 
 .selfBadge {
-  background-color: #ecfdf5;
-  color: #059669;
+  background-color: var(--primary-soft);
+  color: var(--primary-text-soft);
   font-size: 0.65rem;
   font-weight: 700;
   padding: 1px 6px;
@@ -205,7 +205,7 @@
 
 .bio {
   font-size: 0.875rem;
-  color: #4b5563;
+  color: var(--text-body);
   line-height: 1.4;
   margin: 0 0 8px 0;
   display: -webkit-box;
@@ -216,7 +216,7 @@
 
 .noBio {
   font-size: 0.825rem;
-  color: #9ca3af;
+  color: var(--text-subtle);
   font-style: italic;
   margin: 0 0 8px 0;
 }
@@ -267,9 +267,9 @@
 }
 
 .followingBtn:hover:not(:disabled) {
-  background-color: #fef2f2;
-  border-color: #fca5a5;
-  color: #dc2626;
+  background-color: var(--danger-soft);
+  border-color: var(--danger-border);
+  color: var(--danger-text);
 }
 
 .followingBtn:hover:not(:disabled) .followBtnText::before {
@@ -297,7 +297,7 @@
   font-size: 0.95rem;
   background-color: var(--bg-surface);
   border-radius: 14px;
-  border: 1px solid #f0f2f5;
+  border: 1px solid var(--border-subtle);
 }
 
 .emptyBox {
@@ -305,7 +305,7 @@
   padding: 48px 20px;
   background-color: var(--bg-surface);
   border-radius: 14px;
-  border: 1px solid #f0f2f5;
+  border: 1px solid var(--border-subtle);
 }
 
 .emptyTitle {
@@ -317,9 +317,9 @@
 .viewAllBtn {
   padding: 8px 18px;
   border-radius: 9999px;
-  border: 1px solid #10b981;
+  border: 1px solid var(--primary);
   background: transparent;
-  color: #10b981;
+  color: var(--primary);
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -327,7 +327,7 @@
 }
 
 .viewAllBtn:hover {
-  background-color: #ecfdf5;
+  background-color: var(--primary-soft);
 }
 
 .onlineBadge {
@@ -336,17 +336,17 @@
   right: 1px;
   width: 13px;
   height: 13px;
-  background-color: #10b981;
+  background-color: var(--primary);
   border-radius: 50%;
-  border: 2px solid #ffffff;
+  border: 2px solid var(--bg-surface);
 }
 
 .onlineBadgeSmall {
   font-size: 0.7rem;
   padding: 0.1rem 0.45rem;
   border-radius: 9999px;
-  background-color: #ecfdf5;
-  color: #059669;
+  background-color: var(--primary-soft);
+  color: var(--primary-text-soft);
   font-weight: 600;
   margin-left: 6px;
 }

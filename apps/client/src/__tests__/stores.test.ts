@@ -23,6 +23,7 @@ import { api } from "../lib/api";
 import { useAuthStore } from "../store/useAuthStore";
 import { useNotificationStore } from "../store/useNotificationStore";
 import { usePostStore } from "../store/usePostStore";
+import { useThemeStore } from "../store/useThemeStore";
 
 describe("Client Zustand Stores", () => {
   describe("useAuthStore", () => {
@@ -155,6 +156,31 @@ describe("Client Zustand Stores", () => {
 
       usePostStore.getState().setActiveFeed("for-you");
       usePostStore.getState().setActiveSort("latest");
+    });
+  });
+
+  describe("useThemeStore", () => {
+    beforeEach(() => {
+      window.localStorage.clear();
+      useThemeStore.getState().setTheme("light");
+    });
+
+    it("toggles between light and dark mode, persisting to localStorage and document", () => {
+      expect(useThemeStore.getState().theme).toBe("light");
+      expect(document.documentElement.dataset.theme).toBe("light");
+
+      useThemeStore.getState().toggleTheme();
+
+      expect(useThemeStore.getState().theme).toBe("dark");
+      expect(window.localStorage.getItem("phatter-theme")).toBe("dark");
+      expect(document.documentElement.dataset.theme).toBe("dark");
+      expect(document.documentElement.style.colorScheme).toBe("dark");
+
+      useThemeStore.getState().toggleTheme();
+
+      expect(useThemeStore.getState().theme).toBe("light");
+      expect(window.localStorage.getItem("phatter-theme")).toBe("light");
+      expect(document.documentElement.dataset.theme).toBe("light");
     });
   });
 });

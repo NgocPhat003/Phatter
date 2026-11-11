@@ -1,10 +1,11 @@
 .card {
-  background-color: #ffffff;
-  border: 1px solid #f0f2f5;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
   border-radius: 16px;
   padding: 16px 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  box-shadow: var(--shadow-card);
   margin-bottom: 24px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .composerTop {
@@ -17,8 +18,8 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background-color: #e5e7eb;
-  color: #6b7280;
+  background-color: var(--bg-badge-neutral);
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -40,14 +41,14 @@
   outline: none;
   font-size: 0.95rem;
   line-height: 1.5;
-  color: #1f2937;
+  color: var(--text-main);
   resize: none;
   min-height: 80px;
   background: transparent;
 }
 
 .textarea::placeholder {
-  color: #9ca3af;
+  color: var(--text-subtle);
 }
 
 .previewContainer {
@@ -56,7 +57,7 @@
   border-radius: 12px;
   overflow: hidden;
   max-height: 240px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-subtle);
 }
 
 .previewImg {
@@ -94,7 +95,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #4b5563;
+  color: var(--text-muted);
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
@@ -104,7 +105,7 @@
 }
 
 .addImageBtn:hover {
-  color: #111827;
+  color: var(--text-main);
 }
 
 .hiddenInput {

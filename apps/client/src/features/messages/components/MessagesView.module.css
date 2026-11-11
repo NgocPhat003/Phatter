@@ -1,21 +1,21 @@
 .container {
   display: flex;
   height: calc(100vh - 4rem);
-  background-color: #ffffff;
+  background-color: var(--bg-surface);
   border-radius: 1rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-subtle);
   overflow: hidden;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-card);
 }
 
 /* Sidebar Conversations */
 .sidebar {
   width: 340px;
   min-width: 300px;
-  border-right: 1px solid #e2e8f0;
+  border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
-  background-color: #f8fafc;
+  background-color: var(--bg-surface-secondary);
 }
 
 .sidebarHeader {
@@ -23,19 +23,19 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #e2e8f0;
-  background-color: #ffffff;
+  border-bottom: 1px solid var(--border-subtle);
+  background-color: var(--bg-surface);
 }
 
 .sidebarTitle {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-main);
   margin: 0;
 }
 
 .newChatBtn {
-  background-color: #10b981;
+  background-color: var(--primary);
   color: #ffffff;
   border: none;
   width: 36px;
@@ -49,22 +49,23 @@
 }
 
 .newChatBtn:hover {
-  background-color: #059669;
+  background-color: var(--primary-hover);
 }
 
 .searchWrap {
   padding: 0.75rem 1rem;
-  background-color: #ffffff;
-  border-bottom: 1px solid #f1f5f9;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-light);
 }
 
 .searchBar {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background-color: #f1f5f9;
+  background-color: var(--bg-surface-hover);
   border-radius: 9999px;
   padding: 0.4rem 0.85rem;
+  color: var(--text-muted);
 }
 
 .searchBar input {
@@ -72,12 +73,12 @@
   border: none;
   outline: none;
   font-size: 0.875rem;
-  color: #0f172a;
+  color: var(--text-main);
   width: 100%;
 }
 
 .searchBar input::placeholder {
-  color: #94a3b8;
+  color: var(--text-subtle);
 }
 
 .conversationsList {
@@ -95,18 +96,18 @@
   background: none;
   width: 100%;
   text-align: left;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border-light);
   transition: background-color 0.15s ease;
   position: relative;
 }
 
 .conversationItem:hover {
-  background-color: #f1f5f9;
+  background-color: var(--bg-surface-hover);
 }
 
 .activeConversation {
-  background-color: #ecfdf5 !important;
-  border-left: 3px solid #10b981;
+  background-color: var(--primary-soft) !important;
+  border-left: 3px solid var(--primary);
 }
 
 .avatarContainer {
@@ -119,7 +120,7 @@
   height: 44px;
   border-radius: 50%;
   object-fit: cover;
-  background-color: #e2e8f0;
+  background-color: var(--bg-badge-count);
 }
 
 .avatarPlaceholder {
@@ -141,9 +142,9 @@
   right: 0;
   width: 12px;
   height: 12px;
-  background-color: #10b981;
+  background-color: var(--primary);
   border-radius: 50%;
-  border: 2px solid #ffffff;
+  border: 2px solid var(--bg-surface);
 }
 
 .convMeta {
@@ -160,7 +161,7 @@
 
 .convUsername {
   font-weight: 600;
-  color: #0f172a;
+  color: var(--text-main);
   font-size: 0.9375rem;
   white-space: nowrap;
   overflow: hidden;
@@ -171,15 +172,15 @@
   font-size: 0.65rem;
   padding: 0.1rem 0.35rem;
   border-radius: 9999px;
-  background-color: #fef3c7;
-  color: #b45309;
+  background-color: var(--bg-guest-badge);
+  color: var(--text-guest-badge);
   font-weight: 600;
   margin-left: 0.35rem;
 }
 
 .convTime {
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: var(--text-subtle);
   flex-shrink: 0;
 }
 
@@ -192,7 +193,7 @@
 
 .convSnippet {
   font-size: 0.8125rem;
-  color: #64748b;
+  color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -201,11 +202,11 @@
 
 .unreadSnippet {
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-main);
 }
 
 .unreadBadge {
-  background-color: #10b981;
+  background-color: var(--primary);
   color: #ffffff;
   font-size: 0.75rem;
   font-weight: 700;
@@ -219,7 +220,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: #ffffff;
+  background-color: var(--bg-surface);
 }
 
 .chatEmpty {
@@ -230,15 +231,15 @@
   justify-content: center;
   padding: 2rem;
   text-align: center;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .chatEmptyIcon {
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background-color: #ecfdf5;
-  color: #10b981;
+  background-color: var(--primary-soft);
+  color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -248,7 +249,7 @@
 .chatEmptyTitle {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-main);
   margin: 0 0 0.5rem 0;
 }
 
@@ -280,8 +281,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #e2e8f0;
-  background-color: #ffffff;
+  border-bottom: 1px solid var(--border-subtle);
+  background-color: var(--bg-surface);
 }
 
 .chatHeaderUser {
@@ -297,7 +298,7 @@
 
 .chatHeaderName {
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-main);
   font-size: 1rem;
   display: flex;
   align-items: center;
@@ -306,29 +307,29 @@
 
 .chatHeaderStatus {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .statusOnline {
-  color: #10b981;
+  color: var(--primary);
   font-weight: 600;
 }
 
 .profileBtn {
   background: transparent;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-subtle);
   padding: 0.4rem 0.85rem;
   border-radius: 9999px;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #475569;
+  color: var(--text-body);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .profileBtn:hover {
-  border-color: #cbd5e1;
-  background-color: #f8fafc;
+  border-color: var(--border-strong);
+  background-color: var(--bg-surface-hover);
 }
 
 /* Messages Stream */
@@ -368,14 +369,14 @@
 }
 
 .selfBubble {
-  background-color: #10b981;
+  background-color: var(--primary);
   color: #ffffff;
   border-bottom-right-radius: 0.25rem;
 }
 
 .partnerBubble {
-  background-color: #f1f5f9;
-  color: #0f172a;
+  background-color: var(--bg-surface-hover);
+  color: var(--text-main);
   border-bottom-left-radius: 0.25rem;
 }
 
@@ -393,7 +394,7 @@
 }
 
 .partnerMeta {
-  color: #94a3b8;
+  color: var(--text-subtle);
 }
 
 .readIcon {
@@ -411,7 +412,7 @@
 }
 
 .typingBubble {
-  background-color: #f1f5f9;
+  background-color: var(--bg-surface-hover);
   padding: 0.5rem 0.85rem;
   border-radius: 1rem;
   display: flex;
@@ -423,7 +424,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: #94a3b8;
+  background-color: var(--text-subtle);
   animation: typingBounce 1.2s infinite ease-in-out;
 }
 
@@ -447,33 +448,33 @@
 /* Input Bar */
 .inputForm {
   padding: 0.875rem 1.25rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  background-color: #ffffff;
+  background-color: var(--bg-surface);
 }
 
 .inputField {
   flex: 1;
-  background-color: #f1f5f9;
+  background-color: var(--bg-surface-hover);
   border: 1px solid transparent;
   border-radius: 9999px;
   padding: 0.65rem 1.15rem;
   font-size: 0.9375rem;
-  color: #0f172a;
+  color: var(--text-main);
   outline: none;
   transition: all 0.15s ease;
 }
 
 .inputField:focus {
-  background-color: #ffffff;
-  border-color: #10b981;
+  background-color: var(--bg-input);
+  border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
 }
 
 .sendBtn {
-  background-color: #10b981;
+  background-color: var(--primary);
   color: #ffffff;
   border: none;
   width: 40px;
@@ -488,13 +489,13 @@
 }
 
 .sendBtn:disabled {
-  background-color: #e2e8f0;
-  color: #94a3b8;
+  background-color: var(--bg-badge-count);
+  color: var(--text-subtle);
   cursor: not-allowed;
 }
 
 .sendBtn:not(:disabled):hover {
-  background-color: #059669;
+  background-color: var(--primary-hover);
   transform: scale(1.05);
 }
 
@@ -502,8 +503,8 @@
 .spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid #e2e8f0;
-  border-top-color: #10b981;
+  border: 3px solid var(--border-subtle);
+  border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin: 3rem auto;

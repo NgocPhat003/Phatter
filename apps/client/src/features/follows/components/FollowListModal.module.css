@@ -78,15 +78,15 @@
 }
 
 .closeBtn:hover {
-  background-color: #f1f5f9;
-  color: var(--text-main, #0f172a);
+  background-color: var(--bg-surface-hover);
+  color: var(--text-main);
 }
 
 /* Tabs */
 .tabsBar {
   display: flex;
-  border-bottom: 1px solid var(--border-subtle, #e2e8f0);
-  background-color: #f8fafc;
+  border-bottom: 1px solid var(--border-subtle);
+  background-color: var(--bg-surface-secondary);
 }
 
 .tabBtn {
@@ -96,7 +96,7 @@
   background: transparent;
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--text-muted, #64748b);
+  color: var(--text-muted);
   cursor: pointer;
   position: relative;
   display: flex;
@@ -107,14 +107,14 @@
 }
 
 .tabBtn:hover {
-  color: var(--text-main, #0f172a);
-  background-color: #f1f5f9;
+  color: var(--text-main);
+  background-color: var(--bg-surface-hover);
 }
 
 .activeTabBtn {
-  color: #059669 !important;
+  color: var(--primary-text-soft) !important;
   font-weight: 700;
-  background-color: #ffffff !important;
+  background-color: var(--bg-surface) !important;
 }
 
 .activeTabBtn::after {
@@ -125,7 +125,7 @@
   right: 20%;
   height: 3px;
   border-radius: 3px 3px 0 0;
-  background-color: #10b981;
+  background-color: var(--primary);
 }
 
 .badgeCount {
@@ -133,20 +133,20 @@
   font-weight: 600;
   padding: 2px 7px;
   border-radius: 9999px;
-  background-color: #e2e8f0;
-  color: #475569;
+  background-color: var(--bg-badge-count);
+  color: var(--text-body);
 }
 
 .activeTabBtn .badgeCount {
-  background-color: #ecfdf5;
-  color: #059669;
+  background-color: var(--primary-soft);
+  color: var(--primary-text-soft);
 }
 
 /* Search Area */
 .searchSection {
   padding: 12px 20px;
-  border-bottom: 1px solid var(--border-subtle, #e2e8f0);
-  background-color: #ffffff;
+  border-bottom: 1px solid var(--border-subtle);
+  background-color: var(--bg-surface);
 }
 
 .searchBox {
@@ -158,7 +158,7 @@
 .searchIcon {
   position: absolute;
   left: 12px;
-  color: #94a3b8;
+  color: var(--text-subtle);
   pointer-events: none;
 }
 
@@ -166,18 +166,18 @@
   width: 100%;
   padding: 8px 14px 8px 36px;
   border-radius: 9999px;
-  border: 1px solid var(--border-subtle, #e2e8f0);
-  background-color: #f8fafc;
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-input);
   font-size: 0.875rem;
-  color: var(--text-main, #0f172a);
+  color: var(--text-main);
   outline: none;
   transition: all 0.15s ease;
 }
 
 .searchInput:focus {
-  background-color: #ffffff;
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+  background-color: var(--bg-surface);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.14);
 }
 
 /* Scrollable User List */
@@ -195,11 +195,11 @@
   padding: 12px 20px;
   cursor: pointer;
   transition: background-color 0.12s ease;
-  border-bottom: 1px solid #f8fafc;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .userItem:hover {
-  background-color: #f8fafc;
+  background-color: var(--bg-surface-secondary);
 }
 
 /* Avatar */
@@ -249,8 +249,8 @@
 }
 
 .guestBadge {
-  background-color: #fef3c7;
-  color: #92400e;
+  background-color: var(--bg-guest-badge);
+  color: var(--text-guest-badge);
   font-size: 0.65rem;
   font-weight: 700;
   padding: 1px 6px;
@@ -258,8 +258,8 @@
 }
 
 .selfBadge {
-  background-color: #ecfdf5;
-  color: #059669;
+  background-color: var(--primary-soft);
+  color: var(--primary-text-soft);
   font-size: 0.65rem;
   font-weight: 700;
   padding: 1px 6px;
@@ -268,7 +268,7 @@
 
 .bio {
   font-size: 0.825rem;
-  color: #475569;
+  color: var(--text-body);
   line-height: 1.35;
   margin: 0 0 6px 0;
   display: -webkit-box;
@@ -279,7 +279,7 @@
 
 .noBio {
   font-size: 0.8rem;
-  color: #94a3b8;
+  color: var(--text-subtle);
   font-style: italic;
   margin: 0 0 6px 0;
 }
@@ -331,9 +331,9 @@
 }
 
 .followingBtn:hover:not(:disabled) {
-  background-color: #fef2f2;
-  border-color: #fca5a5;
-  color: #dc2626;
+  background-color: var(--danger-soft);
+  border-color: var(--danger-border);
+  color: var(--danger-text);
 }
 
 .followingBtn:hover:not(:disabled) .followBtnText::before {

@@ -7,8 +7,9 @@ import {
   LoginSchema,
   type LoginInput,
 } from "@project-phatter/validation";
-import { LogIn, UserPlus, ShieldAlert, Loader2, Eye, EyeOff } from "lucide-react";
+import { LogIn, UserPlus, ShieldAlert, Loader2, Eye, EyeOff, Moon, Sun } from "lucide-react";
 import { api } from "../lib/api";
+import { useThemeStore } from "../store/useThemeStore";
 
 import styles from "./Login.module.css";
 
@@ -22,6 +23,9 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [guestLoading, setGuestLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const theme = useThemeStore((s) => s.theme);
+  const toggleTheme = useThemeStore((s) => s.toggleTheme);
+  const isDarkMode = theme === "dark";
 
   // Separate, fully-typed React Hook Form instances backed by shared Zod schemas
   const loginForm = useForm<LoginInput>({
@@ -119,6 +123,18 @@ export const Login = ({ onLoginSuccess }: LoginProps) => {
 
   return (
     <div className={styles.container}>
+      <button
+        type="button"
+        className={styles.themeToggleBtn}
+        onClick={toggleTheme}
+        title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        aria-label={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        aria-pressed={isDarkMode}
+      >
+        {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+        <span>{isDarkMode ? "Light" : "Dark"}</span>
+      </button>
+
       <div className={styles.authCard}>
         <div className={styles.header}>
           <h1 className={styles.title}>Phatter</h1>

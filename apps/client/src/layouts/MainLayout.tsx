@@ -8,13 +8,14 @@ import {
   MessageSquare,
   Users,
   Bookmark,
-  Settings,
   Moon,
+  Sun,
   LogOut,
 } from "lucide-react";
 import styles from "./MainLayout.module.css";
 import { useAuthStore } from "../store/useAuthStore";
 import { useNotificationStore } from "../store/useNotificationStore";
+import { useThemeStore } from "../store/useThemeStore";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -57,6 +58,9 @@ export const MainLayout = ({
   const storeLogout = useAuthStore((s) => s.logout);
   const storeUnreadMessages = useNotificationStore((s) => s.unreadMessagesCount);
   const storeUnreadNotifs = useNotificationStore((s) => s.unreadNotificationsCount);
+  const theme = useThemeStore((s) => s.theme);
+  const toggleTheme = useThemeStore((s) => s.toggleTheme);
+  const isDarkMode = theme === "dark";
 
   const effectiveUsername =
     currentUser !== undefined ? currentUser : storeUser?.username || null;
@@ -175,17 +179,22 @@ export const MainLayout = ({
               <Users size={20} />
               <span className={styles.navLabel}>Directory</span>
             </button>
-            <button className={styles.navItem} title="Settings">
-              <Settings size={20} />
-              <span className={styles.navLabel}>Settings</span>
-            </button>
           </nav>
         </div>
 
         <div className={styles.sidebarBottom}>
-          <button className={styles.utilityBtn} title="Dark Mode">
-            <Moon size={18} />
-            <span className={styles.utilityLabel}>Dark Mode</span>
+          <button
+            type="button"
+            className={styles.utilityBtn}
+            onClick={toggleTheme}
+            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            aria-label={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            aria-pressed={isDarkMode}
+          >
+            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+            <span className={styles.utilityLabel}>
+              {isDarkMode ? "Light Mode" : "Dark Mode"}
+            </span>
           </button>
 
           <button
