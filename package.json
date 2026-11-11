@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "dev": "pnpm --parallel --filter server --filter client dev",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "pnpm --filter @project-phatter/validation test && pnpm --filter server test && pnpm --filter client test",
+    "test:unit": "pnpm --filter @project-phatter/validation test && pnpm --filter server test:unit && pnpm --filter client test",
+    "test:integration": "pnpm --filter server test:integration",
+    "build": "pnpm --filter @project-phatter/validation build && pnpm --filter client build"
   },
   "keywords": [],
   "author": "",
